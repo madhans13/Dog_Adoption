@@ -1,0 +1,49 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "admin",
+      "status": "active"
+    },
+    {
+      "id": 2,
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "role": "rescuer",
+      "status": "active"
+    }
+  ],
+  "dogs": [
+    {
+      "id": 1,
+      "name": "Buddy",
+      "breed": "Golden Retriever",
+      "age": 3,
+      "status": "available"
+    },
+    {
+      "id": 2,
+      "name": "Luna",
+      "breed": "Border Collie",
+      "age": 2,
+      "status": "adopted"
+    }
+  ],
+  "rescueRequests": [
+    {
+      "id": 1,
+      "dogType": "Mixed Breed",
+      "location": "Downtown",
+      "status": "pending",
+      "reporterName": "Alice Johnson"
+    }
+  ],
+  "stats": {
+    "totalUsers": 15,
+    "totalDogs": 23,
+    "pendingRequests": 5,
+    "completedRescues": 18
+  }
+}

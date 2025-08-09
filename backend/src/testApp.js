@@ -8,7 +8,7 @@ const app = express();
 
 // Basic middleware
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
   credentials: true
 }));
 
@@ -122,6 +122,21 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
+// Role-based middleware
+const requireRescuer = (req, res, next) => {
+  if (req.user.role !== 'rescuer' && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Rescuer access required' });
+  }
+  next();
+};
+
+const requireAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
+
 // Auth endpoints
 app.post('/api/auth/register', register);
 app.post('/api/auth/login', login);
@@ -226,6 +241,7 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
       totalRescueRequests: parseInt(stats.total_rescue_requests || 0),
       pendingRequests: parseInt(stats.pending_requests || 0),
       completedRequests: parseInt(stats.completed_requests || 0),
+      completedRescues: parseInt(stats.completed_requests || 0),
       recentActivity: []
     });
   } catch (error) {
@@ -365,6 +381,34 @@ app.get('/api/admin/dogs', authenticateToken, async (req, res) => {
   }
 });
 
+// Admin route - get all rescue requests
+app.get('/api/admin/rescue-requests', authenticateToken, async (req, res) => {
+  try {
+    const query = `
+      SELECT * FROM "RescueRequest" 
+      ORDER BY created_at DESC
+    `;
+    
+    const result = await pool.query(query);
+    const requests = result.rows.map(row => ({
+      id: row.id,
+      reporterName: row.notes ? row.notes.replace('Reporter: ', '') : 'Anonymous',
+      contactDetails: row.contact_phone,
+      location: row.location,
+      dogType: row.animal_type,
+      description: row.description,
+      imageUrls: row.image_urls ? row.image_urls.map(url => `http://localhost:5000${url}`) : [],
+      status: row.status,
+      submittedAt: row.created_at
+    }));
+    
+    res.json({ requests });
+  } catch (error) {
+    console.error('Error fetching rescue requests for admin:', error);
+    res.status(500).json({ error: 'Failed to fetch rescue requests' });
+  }
+});
+
 // Database connection for rescue requests
 import pkg from 'pg';
 import dotenv from 'dotenv';
@@ -454,8 +498,139 @@ app.get('/api/rescue', async (req, res) => {
   }
 });
 
-// Update rescue request status
-app.put('/api/rescue/:id/status', async (req, res) => {
+// Start rescue (assign to rescuer and set to in_progress)
+app.put('/api/rescue/:id/start', authenticateToken, requireRescuer, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rescuerId = req.user.id;
+    
+    // Check if rescue request exists and is available
+    const checkQuery = `
+      SELECT * FROM "RescueRequest" 
+      WHERE id = $1 AND (status = 'open' OR status = 'assigned')
+    `;
+    const checkResult = await pool.query(checkQuery, [id]);
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Rescue request not found or already in progress' });
+    }
+    
+    // Update status to in_progress and assign rescuer
+    const updateQuery = `
+      UPDATE "RescueRequest" 
+      SET status = 'in_progress', 
+          assigned_rescuer_id = $1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING *
+    `;
+    
+    const result = await pool.query(updateQuery, [rescuerId, id]);
+    
+    res.json({ 
+      message: 'Rescue started successfully',
+      request: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('Error starting rescue:', error);
+    res.status(500).json({ error: 'Failed to start rescue' });
+  }
+});
+
+// Complete rescue with dog status update
+app.put('/api/rescue/:id/complete', authenticateToken, requireRescuer, upload.single('rescuePhoto'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rescuerId = req.user.id;
+    const { dogName, dogBreed, dogAge, dogGender, dogCondition, rescueNotes, dogLocation } = req.body;
+    
+    // Check if this rescuer owns this rescue and it's in progress
+    const checkQuery = `
+      SELECT * FROM "RescueRequest" 
+      WHERE id = $1 AND assigned_rescuer_id = $2 AND status = 'in_progress'
+    `;
+    const checkResult = await pool.query(checkQuery, [id, rescuerId]);
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(403).json({ error: 'You can only complete rescues you started and are in progress' });
+    }
+    
+    let rescuePhotoUrl = null;
+    if (req.file) {
+      rescuePhotoUrl = `/uploads/${req.file.filename}`;
+    }
+    
+    // Start transaction
+    await pool.query('BEGIN');
+    
+    try {
+      // Add the rescued dog to the database
+      const dogQuery = `
+        INSERT INTO "Dog" (
+          name, age, breed, description, gender, location, 
+          "imageUrl", rescuer_id, is_rescue_case, "createdAt"
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING *
+      `;
+      
+      const dogValues = [
+        dogName || 'Rescued Dog',
+        Number(dogAge) || 0,
+        dogBreed || 'Mixed',
+        `Rescue case completed by rescuer. Condition: ${dogCondition}. Notes: ${rescueNotes || 'No additional notes.'}`,
+        dogGender || 'unknown',
+        dogLocation || 'Rescue Center',
+        rescuePhotoUrl,
+        rescuerId,
+        true, // is_rescue_case
+        new Date()
+      ];
+      
+      const dogResult = await pool.query(dogQuery, dogValues);
+      const newDog = dogResult.rows[0];
+      
+      // Update rescue request status to completed
+      const rescueUpdateQuery = `
+        UPDATE "RescueRequest" 
+        SET status = 'completed',
+            rescue_completion_notes = $1,
+            rescue_photo_url = $2,
+            rescued_dog_id = $3,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $4
+        RETURNING *
+      `;
+      
+      const rescueResult = await pool.query(rescueUpdateQuery, [
+        rescueNotes,
+        rescuePhotoUrl,
+        newDog.id,
+        id
+      ]);
+      
+      await pool.query('COMMIT');
+      
+      res.json({ 
+        message: 'Rescue completed successfully',
+        request: rescueResult.rows[0],
+        rescuedDog: {
+          ...newDog,
+          imageUrl: newDog.imageUrl ? `http://localhost:5000${newDog.imageUrl}` : null
+        }
+      });
+    } catch (error) {
+      await pool.query('ROLLBACK');
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error completing rescue:', error);
+    res.status(500).json({ error: 'Failed to complete rescue' });
+  }
+});
+
+// Update rescue request status (admin only)
+app.put('/api/rescue/:id/status', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -493,6 +668,11 @@ app.put('/api/rescue/:id/status', async (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(500).json({ error: 'Internal server error' });
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
 
 export default app;
