@@ -180,9 +180,9 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
   }
 
   return (
-           <div className="min-h-screen bg-green-50 custom-scrollbar" style={{ fontFamily: '"Inter", "Segoe UI", sans-serif' }}>
+           <div className="min-h-screen bg-[#FFFDF6] custom-scrollbar" style={{ fontFamily: '"Inter", "Segoe UI", sans-serif' }}>
             {/* Header */}
-      <header className="bg-white shadow-sm border-b border-green-100">
+      <header className="bg-[#8DBFF3] shadow-sm border-b border-green-100">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
@@ -201,19 +201,19 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                       <span className="text-white font-bold text-sm">{userInitials}</span>
                     </div>
                     <div className="flex flex-col">
-                      <div className="font-bold text-gray-900 text-sm" style={{ fontFamily: 'Kalam, cursive' }}>{displayName}</div>
+                      <div className="font-bold text-gray-900 text-sm" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>{displayName}</div>
                       <div className="text-xs text-gray-600 lowercase">{user.role}</div>
                     </div>
                   </div>
-                  <Button 
-                    onClick={onLogout}
-                    variant="outline" 
-                    size="sm"
-                    className="text-xs border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md px-3 py-1"
-                    style={{ fontFamily: 'Kalam, cursive' }}
-                  >
-                    Logout
-                  </Button>
+                                      <Button 
+                      onClick={onLogout}
+                      variant="outline" 
+                      size="sm"
+                      className="text-xs border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md px-3 py-1"
+                      style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}
+                    >
+                      Logout
+                    </Button>
                 </div>
                ) : (
                 <div className="flex items-center space-x-4">
@@ -222,7 +222,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                       <span className="text-white font-bold text-sm">G</span>
                     </div>
                     <div className="flex flex-col">
-                      <div className="font-bold text-gray-900 text-sm" style={{ fontFamily: 'Kalam, cursive' }}>GUEST</div>
+                      <div className="font-bold text-gray-900 text-sm" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>GUEST</div>
                       <div className="text-xs text-gray-600 lowercase">visitor</div>
                     </div>
                   </div>
@@ -231,7 +231,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                     variant="outline" 
                     size="sm"
                     className="text-xs border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md px-3 py-1"
-                    style={{ fontFamily: 'Kalam, cursive' }}
+                    style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}
                   >
                     Login
                   </Button>
@@ -243,20 +243,20 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
       </header>
 
       {/* Add top margin back */}
-      <div className="py-8"></div>
+      <div className="py-5"></div>
 
       <div className="w-full px-5">
         <div className="flex gap-7">
           {/* Sidebar Filters */}
           <div className="w-70 flex-shrink-0 ml-1">
-            <div className="bg-green-200 border border-black sticky top-4 p-4">
-              <h3 className="text-lg font-bold text-gray-900 mb-6 uppercase tracking-wide">
+                            <div className="bg-[#DDEB9D] border border-black sticky top-1/2 transform -translate-y-1/2 p-4">
+              <h3 className="text-lg font-bold text-gray-900 mb-6 uppercase tracking-wide" style={{ fontFamily: 'Inter Black, sans-serif' }}>
                 FILTER
               </h3>
 
                 {/* Age Filter */}
                 <div className="mb-6">
-                  <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 block">
+                  <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 block" style={{ fontFamily: 'Inter Black, sans-serif' }}>
                     Age
                   </Label>
                   <div className="px-2">
@@ -277,7 +277,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
 
                 {/* Breed Filter */}
                 <div className="mb-6">
-                  <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 block">
+                  <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 block" style={{ fontFamily: 'Inter Black, sans-serif' }}>
                     Breed
                   </Label>
                   <Select value={selectedBreed} onValueChange={setSelectedBreed}>
@@ -295,7 +295,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
 
                 {/* Gender Filter */}
                 <div className="mb-6">
-                  <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 block">
+                  <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 block" style={{ fontFamily: 'Inter Black, sans-serif' }}>
                     Gender
                   </Label>
                   <Select value={selectedGender} onValueChange={setSelectedGender}>
@@ -319,7 +319,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                     <span className="text-white font-bold">{userInitials}</span>
                   </div>
                   <div>
-                    <div className="font-bold uppercase tracking-wide">{displayName}</div>
+                    <div className="font-bold uppercase tracking-wide" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>{displayName}</div>
                     <div className="text-xs text-gray-300">{user.role}</div>
                   </div>
                 </div>
@@ -332,7 +332,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
              {/* Main Title and Search Bar */}
              <div className="mb-6">
                <div className="flex justify-between items-center mb-4">
-                 <h2 className="text-4xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: 'Kalam, cursive' }}>
+                 <h2 className="text-4xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
                    Don't Buy Love, Adopt It!
                  </h2>
                  <div className="relative">
@@ -342,7 +342,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                      value={searchQuery}
                      onChange={(e) => setSearchQuery(e.target.value)}
                      className="w-80 h-12 rounded-full border-2 border-black bg-white text-sm font-bold uppercase tracking-wide placeholder:text-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300"
-                     style={{ fontFamily: 'Kalam, cursive' }}
+                     style={{ fontFamily: 'Inter Black, sans-serif' }}
                    />
                  </div>
                </div>
@@ -353,42 +353,42 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                  <p className="text-gray-500 text-lg">No dogs found matching your criteria.</p>
                </div>
              ) : (
-               <div className="border border-black rounded-3xl p-6 bg-white">
-                                 <div className="grid grid-cols-3 gap-9 justify-items-center">
+               <div className="border border-black rounded-4xl p-8 bg-white">
+                                 <div className="grid grid-cols-3 gap-8 justify-items-center">
                     {filteredDogs.map((dog) => (
-                                             <Card key={dog.id} className="w-90 border border-black shadow-lg cursor-pointer group premium-hover">
+                                             <Card key={dog.id} className="w-90 border border-black shadow-[0_20px_25px_-5px_rgba(0,0,0,0.3)] cursor-pointer group bg-[#8DBFF3]">
                       {/* Top section with name and details */}
-                      <CardContent className="text-white" style={{ fontFamily: 'Kalam, cursive' }}>
-                        <h3 className="text-white font-bold text-4xl tracking-wide mb-2 uppercase transition-all duration-300 group-hover:text-green-100 group-hover:scale-105" style={{ fontFamily: 'Kalam, cursive' }}>
+                      <CardContent className="text-[#F4F6FF]" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>
+                        <h3 className="text-[#F4F6FF] font-bold text-4xl tracking-wide mb-2 uppercase transition-all duration-300 group-hover:scale-105" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>
                           {dog.name}
                         </h3>
-                        <div className="text-white font-medium text-sm space-y-1 uppercase mb-4 transition-all duration-300 group-hover:text-green-100" style={{ fontFamily: 'Kalam, cursive' }}>
+                        <div className="text-[#F4F6FF] font-medium text-sm space-y-1 uppercase mb-4 transition-all duration-300" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>
                           <div className="transition-transform duration-300 group-hover:translate-x-1">AGE: {dog.age}</div>
                           <div className="transition-transform duration-300 group-hover:translate-x-1">GENDER: {dog.gender.toUpperCase()}</div>
                         </div>
                         
                         {/* Image section with breed badge and adopt button */}
-                        <div className="relative rounded-2xl overflow-hidden w-full h-48 group-hover:shadow-inner">
+                        <div className="relative rounded-2xl overflow-hidden -mx-3 -mb-3 h-55">
                           <img
                             src={dog.imageUrl || '/placeholder-dog.jpg'}
                             alt={dog.name}
-                            className="w-full h-full object-cover object-center transition-all duration-700 ease-out group-hover:scale-110 group-hover:brightness-110"
+                            className="w-full h-full object-cover object-center transition-all duration-300 ease-out group-hover:scale-105"
                           />
                           
                           {/* Breed badge overlay */}
-                          <div className="absolute top-4 left-4 bg-black bg-opacity-60 text-white px-3 py-2 rounded-full text-sm font-medium transition-all duration-400 ease-out group-hover:bg-green-600 group-hover:bg-opacity-90 group-hover:scale-105 group-hover:-translate-y-1" style={{ fontFamily: 'Kalam, cursive' }}>
+                          <div className="absolute top-2 left-2 backdrop-blur-md bg-black/50 border border-white/50 text-white px-7 py-1 rounded-full text-sm font-medium transition-all duration-300 ease-out group-hover:scale-105" style={{ fontFamily: 'Instrument Sans, sans-serif' }}>
                             {dog.breed}
                           </div>
                           
                           {/* Adopt button overlay at bottom */}
-                          <div className="absolute bottom-4 left-4 right-4">
-                                                         <Button
-                               onClick={() => handleAdoptClick(dog)}
-                               className="w-full bg-white text-black font-bold text-lg py-4 rounded-full transition-all duration-500 ease-out shadow-lg hover:shadow-2xl uppercase tracking-wide transform hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-500 hover:text-white hover:scale-110 hover:-translate-y-1 group-hover:animate-pulse"
-                               style={{ fontFamily: 'Kalam, cursive' }}
-                             >
-                               ADOPT ME
-                             </Button>
+                          <div className="absolute bottom-2 left-2 right-2">
+                                                                                     <Button
+                              onClick={() => handleAdoptClick(dog)}
+                              className="w-full bg-white text-black font-bold text-sm py-4 rounded-full transition-all duration-300 ease-out shadow-lg hover:shadow-xl uppercase tracking-wide transform hover:bg-gradient-to-r hover:from-green-500 hover:to-green-600 hover:text-white hover:scale-95"
+                              style={{ fontFamily: 'Instrument Sans, sans-serif' }}
+                            >
+                              ADOPT ME
+                            </Button>
                           </div>
                         </div>
                       </CardContent>

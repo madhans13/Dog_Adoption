@@ -181,7 +181,7 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
       });
       
       if (response.ok) {
-        await fetchRequests(); // Refresh the list
+        await fetchRescueRequests(); // Refresh the list
         // Auto-select the started request
         const updatedRequest = { ...request, status: 'in_progress', assigned_rescuer_id: user?.id };
         setSelectedRequest(updatedRequest);
@@ -244,7 +244,7 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
       });
       
       if (response.ok) {
-        await fetchRequests(); // Refresh the list
+        await fetchRescueRequests(); // Refresh the list
         setShowCompletionForm(false);
         setCompletingRequest(null);
         setSelectedRequest(null);
@@ -623,6 +623,19 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
                       </p>
                     </div>
                   ) : null}
+                  
+                  {/* Contact Reporter Button - Always visible */}
+                  <Button 
+                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6"
+                    style={{ fontFamily: 'Kalam, cursive' }}
+                    onClick={() => {
+                      if (selectedRequest.contactDetails) {
+                        window.open(`tel:${selectedRequest.contactDetails}`, '_blank');
+                      }
+                    }}
+                  >
+                    📞 Contact Reporter
+                  </Button>
                 </div>
 
                 {/* Reporter Information */}
@@ -712,19 +725,7 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
                   </Card>
                 )}
 
-                {/* Action Buttons */}
-                <Card className="border-2 border-gray-200 shadow-lg bg-green-50">
-                  <CardContent className="pt-6">
-                    <div className="flex gap-4">
-                      <Button className="flex-1 bg-blue-500 hover:bg-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold py-3" style={{ fontFamily: 'Kalam, cursive' }}>
-                        📞 Contact Reporter
-                      </Button>
-                      <Button className="flex-1 bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transition-all duration-300 font-semibold py-3" style={{ fontFamily: 'Kalam, cursive' }}>
-                        ✅ Start Rescue
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+
               </div>
             ) : (
               <Card className="text-center py-20 bg-green-50 border-2 border-gray-200 shadow-lg">

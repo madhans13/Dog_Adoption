@@ -2,12 +2,26 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face{
+    font-family: "KBStickToThePlan";
+    src: url("../Web Fonts/ef4a6d6d3f3fddb14ee64704904e9890.eot");
+    src: url("../Web Fonts/ef4a6d6d3f3fddb14ee64704904e9890.eot?#iefix")format("embedded-opentype"),
+        url("../Web Fonts/ef4a6d6d3f3fddb14ee64704904e9890.woff")format("woff"),
+        url("../Web Fonts/ef4a6d6d3f3fddb14ee64704904e9890.woff2")format("woff2"),
+        url("../Web Fonts/ef4a6d6d3f3fddb14ee64704904e9890.ttf")format("truetype"),
+        url("../Web Fonts/ef4a6d6d3f3fddb14ee64704904e9890.svg#KBStickToThePlan")format("svg");
+    font-weight:normal;
+    font-style:normal;
+    font-display:swap;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-display: "Kalam", cursive;
+  --font-stick: "KBStickToThePlan", sans-serif;
 }
 
 html,

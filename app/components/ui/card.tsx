@@ -39,7 +39,7 @@ interface CardFooterProps {
 function Card({ className = '', children, ...props }: CardProps) {
   return (
     <div
-      className={`bg-green-400 rounded-3xl shadow-lg overflow-hidden ${className}`}
+      className={`rounded-4xl shadow-2xl overflow-hidden transition-all duration-300 ease-out hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.4)] hover:-translate-y-3 ${className}`}
       {...props}
     >
       {children}

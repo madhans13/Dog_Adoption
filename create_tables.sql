@@ -65,7 +65,9 @@ CREATE TABLE IF NOT EXISTS "Dog" (
     rescuer_id INTEGER REFERENCES "User"(id),
     rescue_date TIMESTAMP,
     "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- Additional fields needed by the backend
+    imageUrl VARCHAR(255)
 );
 
 -- 5. ADOPTION REQUESTS TABLE
@@ -99,7 +101,17 @@ CREATE TABLE IF NOT EXISTS "RescueRequest" (
     completed_at TIMESTAMP,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- Additional fields needed by the backend
+    rescue_completion_notes TEXT,
+    rescue_photo_url VARCHAR(255),
+    rescued_dog_id INTEGER REFERENCES "Dog"(id),
+    reporter_id INTEGER REFERENCES "User"(id),
+    dog_description TEXT,
+    latitude DECIMAL(10, 8),
+    longitude DECIMAL(11, 8),
+    contact_info TEXT,
+    admin_notes TEXT
 );
 
 -- 7. USER SESSIONS TABLE (JWT token management)
