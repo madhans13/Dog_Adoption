@@ -269,7 +269,7 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
       formData.append('name', dogForm.name);
       formData.append('age', dogForm.age);
       formData.append('breed', dogForm.breed);
-      formData.append('gender', dogForm.gender);
+      formData.append('gender', dogForm.gender); // This will now be 'Male' or 'Female'
       formData.append('description', dogForm.description);
       formData.append('location', dogForm.location);
       formData.append('isRescueCase', dogForm.isRescueCase.toString());
@@ -305,11 +305,15 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
         });
         setSelectedImage(null);
         setImagePreview(null);
+        alert('Dog added successfully!');
       } else {
-        console.error('Failed to add dog');
+        const errorData = await response.json();
+        console.error('Failed to add dog:', errorData);
+        alert(`Failed to add dog: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error adding dog:', error);
+      alert('Error adding dog. Please try again.');
     }
   };
 
@@ -790,8 +794,8 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -965,9 +969,9 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="unknown">Unknown</SelectItem>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Unknown">Unknown</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
