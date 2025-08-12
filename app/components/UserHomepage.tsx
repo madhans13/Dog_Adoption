@@ -48,10 +48,16 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showRescueModal, setShowRescueModal] = useState(false);
 
-  // Filter states
-  const [ageRange, setAgeRange] = useState([0, 15]);
-  const [selectedBreed, setSelectedBreed] = useState("all");
-  const [selectedGender, setSelectedGender] = useState("all");
+     // Filter states
+   const [ageRange, setAgeRange] = useState([0, 15]);
+   const [selectedBreed, setSelectedBreed] = useState("all");
+   const [selectedGender, setSelectedGender] = useState("all");
+   const [selectedSize, setSelectedSize] = useState("all");
+   const [selectedEnergy, setSelectedEnergy] = useState("all");
+   const [selectedLocation, setSelectedLocation] = useState("all");
+   const [goodWithKids, setGoodWithKids] = useState(false);
+   const [goodWithDogs, setGoodWithDogs] = useState(false);
+   const [goodWithCats, setGoodWithCats] = useState(false);
 
   // Adoption form state
   const [adoptionForm, setAdoptionForm] = useState({
@@ -68,9 +74,9 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
     fetchDogs();
   }, []);
 
-  useEffect(() => {
-    applyFilters();
-  }, [dogs, searchQuery, ageRange, selectedBreed, selectedGender]);
+     useEffect(() => {
+     applyFilters();
+   }, [dogs, searchQuery, ageRange, selectedBreed, selectedGender, selectedSize, selectedEnergy, selectedLocation, goodWithKids, goodWithDogs, goodWithCats]);
 
   const fetchDogs = async () => {
     try {
@@ -99,44 +105,106 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
     }
   };
 
-  const applyFilters = () => {
-    if (!Array.isArray(dogs)) {
-      setFilteredDogs([]);
-      return;
-    }
-    let filtered = dogs;
+     // Helper function to determine dog size based on breed
+   const getDogSize = (breed: string): string => {
+     const smallBreeds = ['chihuahua', 'pomeranian', 'yorkshire', 'maltese', 'shih tzu', 'pug', 'boston terrier'];
+     const largeBreeds = ['german shepherd', 'labrador', 'golden retriever', 'rottweiler', 'great dane', 'saint bernard', 'mastiff'];
+     
+     const breedLower = breed.toLowerCase();
+     if (smallBreeds.some(b => breedLower.includes(b))) return 'small';
+     if (largeBreeds.some(b => breedLower.includes(b))) return 'large';
+     return 'medium';
+   };
 
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(dog => 
-        dog.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        dog.breed.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+   // Helper function to determine dog energy level based on breed
+   const getDogEnergy = (breed: string): string => {
+     const highEnergyBreeds = ['border collie', 'australian shepherd', 'jack russell', 'siberian husky', 'dalmatian', 'boxer'];
+     const lowEnergyBreeds = ['bulldog', 'basset hound', 'great dane', 'bernese mountain dog', 'newfoundland', 'chow chow'];
+     
+     const breedLower = breed.toLowerCase();
+     if (highEnergyBreeds.some(b => breedLower.includes(b))) return 'high';
+     if (lowEnergyBreeds.some(b => breedLower.includes(b))) return 'low';
+     return 'medium';
+   };
 
-    // Age filter
-    filtered = filtered.filter(dog => 
-      dog.age >= ageRange[0] && dog.age <= ageRange[1]
-    );
+   const applyFilters = () => {
+     if (!Array.isArray(dogs)) {
+       setFilteredDogs([]);
+       return;
+     }
+     let filtered = dogs;
 
-    // Breed filter
-    if (selectedBreed !== "all") {
-      filtered = filtered.filter(dog => dog.breed === selectedBreed);
-    }
+     // Search filter
+     if (searchQuery) {
+       filtered = filtered.filter(dog => 
+         dog.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         dog.breed.toLowerCase().includes(searchQuery.toLowerCase())
+       );
+     }
 
-    // Gender filter
-    if (selectedGender !== "all") {
-      filtered = filtered.filter(dog => dog.gender.toLowerCase() === selectedGender);
-    }
+     // Age filter
+     filtered = filtered.filter(dog => 
+       dog.age >= ageRange[0] && dog.age <= ageRange[1]
+     );
 
-    setFilteredDogs(filtered);
-  };
+     // Breed filter
+     if (selectedBreed !== "all") {
+       filtered = filtered.filter(dog => dog.breed === selectedBreed);
+     }
 
-  const getUniqueBreeds = () => {
-    if (!Array.isArray(dogs)) return [];
-    const breeds = dogs.map(dog => dog.breed);
-    return [...new Set(breeds)];
-  };
+     // Gender filter
+     if (selectedGender !== "all") {
+       filtered = filtered.filter(dog => dog.gender.toLowerCase() === selectedGender);
+     }
+
+     // Size filter (if dog has size property)
+     if (selectedSize !== "all") {
+       filtered = filtered.filter(dog => {
+         // This is a placeholder - you'll need to add size property to your Dog interface
+         // For now, we'll filter based on breed characteristics
+         const dogSize = getDogSize(dog.breed);
+         return dogSize === selectedSize;
+       });
+     }
+
+     // Energy level filter (if dog has energy property)
+     if (selectedEnergy !== "all") {
+       filtered = filtered.filter(dog => {
+         // This is a placeholder - you'll need to add energy property to your Dog interface
+         // For now, we'll filter based on breed characteristics
+         const dogEnergy = getDogEnergy(dog.breed);
+         return dogEnergy === selectedEnergy;
+       });
+     }
+
+     // Location filter
+     if (selectedLocation !== "all") {
+       filtered = filtered.filter(dog => {
+         // This is a placeholder - you'll need to add location property to your Dog interface
+         // For now, we'll use the existing location property
+         return dog.location.toLowerCase().includes(selectedLocation.toLowerCase());
+       });
+     }
+
+     // Good with filters (if dog has these properties)
+     if (goodWithKids || goodWithDogs || goodWithCats) {
+       filtered = filtered.filter(dog => {
+         // This is a placeholder - you'll need to add these properties to your Dog interface
+         // For now, we'll return all dogs
+         return true;
+       });
+     }
+
+     setFilteredDogs(filtered);
+   };
+
+     const getUniqueBreeds = () => {
+     if (!Array.isArray(dogs)) return [];
+     const breeds = dogs.map(dog => dog.breed);
+     return [...new Set(breeds)];
+   };
+
+
 
   const handleAdoptClick = (dog: Dog) => {
     setSelectedDog(dog);
@@ -185,149 +253,233 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
   return (
            <div className="min-h-screen bg-[#FFFDF6] custom-scrollbar" style={{ fontFamily: '"Inter", "Segoe UI", sans-serif' }}>
             {/* Header */}
-      <header className="bg-[#8DBFF3] shadow-sm border-b border-green-100">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                Happy Strays
-              </h1>
-            </div>
-
-            {/* Profile - positioned at far right */}
-            <div className="flex items-center space-x-4 ml-auto">
-                              {user ? (
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">{userInitials}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="font-bold text-gray-900 text-sm" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>{displayName}</div>
-                      <div className="text-xs text-gray-600 lowercase">{user.role}</div>
-                    </div>
-                  </div>
-                                      <Button 
-                      onClick={onLogout}
-                      variant="outline" 
-                      size="sm"
-                      className="text-xs border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md px-3 py-1"
-                      style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}
-                    >
-                      Logout
-                    </Button>
-                </div>
-               ) : (
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">G</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="font-bold text-gray-900 text-sm" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>GUEST</div>
-                      <div className="text-xs text-gray-600 lowercase">visitor</div>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={() => setShowAuthModal(true)}
-                    variant="outline" 
-                    size="sm"
-                    className="text-xs border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md px-3 py-1"
-                    style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}
-                  >
-                    Login
-                  </Button>
-                </div>
-               )}
-            </div>
-          </div>
-        </div>
-      </header>
-
+      
       {/* Add top margin back */}
       <div className="py-5"></div>
 
-      <div className="w-full px-5">
+      <div className="w-full px-7">
         <div className="flex gap-7">
           {/* Sidebar Filters */}
-          <div className="w-70 flex-shrink-0 ml-1">
-                            <div className="bg-[#DDEB9D] border border-black sticky top-1/2 transform -translate-y-1/2 p-4">
-              <h3 className="text-lg font-bold text-gray-900 mb-6 uppercase tracking-wide" style={{ fontFamily: 'Inter Black, sans-serif' }}>
-                FILTER
-              </h3>
+{/* Sidebar Filters */}
+<div className="w-72 flex-shrink-0 flex flex-col justify-start min-h-screen bg-gray-50">
+  <div className="bg-[#FEFBC7] border border-gray-200 p-6 z-20 rounded-0xl flex flex-col shadow-lg" style={{ height: '90vh' }}>
+    {/* Filter Content - Takes up available space */}
+    <div className="flex-1 overflow-y-auto overflow-x-visible">
+      <h3 className="text-xxl font-extrabold text-gray-900 mb-8 uppercase tracking-wider" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 1000 }}>
+        Filter
+      </h3>
 
-                {/* Age Filter */}
-                <div className="mb-6">
-                  <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 block" style={{ fontFamily: 'Inter Black, sans-serif' }}>
-                    Age
-                  </Label>
-                  <div className="px-2">
-                    <Slider
-                      value={ageRange}
-                      onValueChange={setAgeRange}
-                      max={15}
-                      min={0}
-                      step={1}
-                      className="mb-2"
-                    />
-                    <div className="flex justify-between text-xs text-gray-600 font-medium">
-                      <span>{ageRange[0]} years</span>
-                      <span>{ageRange[1]} years</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Breed Filter */}
-                <div className="mb-6">
-                  <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 block" style={{ fontFamily: 'Inter Black, sans-serif' }}>
-                    Breed
-                  </Label>
-                  <Select value={selectedBreed} onValueChange={setSelectedBreed}>
-                    <SelectTrigger className="bg-white border-gray-300">
-                      <SelectValue placeholder="All breeds" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All breeds</SelectItem>
-                      {getUniqueBreeds().map(breed => (
-                        <SelectItem key={breed} value={breed}>{breed}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Gender Filter */}
-                <div className="mb-6">
-                  <Label className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 block" style={{ fontFamily: 'Inter Black, sans-serif' }}>
-                    Gender
-                  </Label>
-                  <Select value={selectedGender} onValueChange={setSelectedGender}>
-                    <SelectTrigger className="bg-white border-gray-300">
-                      <SelectValue placeholder="All genders" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All genders</SelectItem>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-            </div>
-
-            {/* User Profile Card (Bottom Left) - Always visible */}
-            <div className="bg-black text-white mt-6 sticky border border-black p-4" style={{ top: 'calc(100vh - 120px)' }}>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold">{userInitials}</span>
-                </div>
-                <div>
-                  <div className="font-bold uppercase tracking-wide" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>{displayName}</div>
-                  <div className="text-xs text-gray-300">{user ? user.role : 'guest'}</div>
-                </div>
-              </div>
-              
-            </div>
+      {/* Age Filter */}
+      <div className="mb-8">
+        <Label className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4 block" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800 }}>
+          Age
+        </Label>
+        <div className="px-3">
+          <Slider
+            value={ageRange}
+            onValueChange={setAgeRange}
+            max={15}
+            min={0}
+            step={1}
+            className="mb-3 cursor-pointer"
+          />
+          <div className="flex justify-between text-xs text-gray-500 font-medium">
+            <span>{ageRange[0]} years</span>
+            <span>{ageRange[1]} years</span>
           </div>
+        </div>
+      </div>
+
+      {/* Breed Filter */}
+      <div className="mb-8">
+        <Label className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4 block" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800 }}>
+          Breed
+        </Label>
+        <Select value={selectedBreed} onValueChange={setSelectedBreed}>
+          <SelectTrigger className="bg-white border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-300">
+            <SelectValue placeholder="All breeds" />
+          </SelectTrigger>
+          <SelectContent className="bg-white rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+            <SelectItem value="all">All breeds</SelectItem>
+            {getUniqueBreeds().map(breed => (
+              <SelectItem key={breed} value={breed}>{breed}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+             {/* Gender Filter */}
+       <div className="mb-8">
+         <Label className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4 block" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800 }}>
+           Gender
+         </Label>
+         <Select value={selectedGender} onValueChange={setSelectedGender}>
+           <SelectTrigger className="bg-white border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-300">
+             <SelectValue placeholder="All genders" />
+           </SelectTrigger>
+           <SelectContent className="bg-white rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+             <SelectItem value="all">All genders</SelectItem>
+             <SelectItem value="male">Male</SelectItem>
+             <SelectItem value="female">Female</SelectItem>
+           </SelectContent>
+         </Select>
+       </div>
+
+       {/* Size Filter */}
+       <div className="mb-8">
+         <Label className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4 block" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800 }}>
+           Size
+         </Label>
+         <Select value={selectedSize} onValueChange={setSelectedSize}>
+           <SelectTrigger className="bg-white border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-300">
+             <SelectValue placeholder="All sizes" />
+           </SelectTrigger>
+           <SelectContent className="bg-white rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+             <SelectItem value="all">All sizes</SelectItem>
+             <SelectItem value="small">Small (under 20 lbs)</SelectItem>
+             <SelectItem value="medium">Medium (20-50 lbs)</SelectItem>
+             <SelectItem value="large">Large (over 50 lbs)</SelectItem>
+           </SelectContent>
+         </Select>
+       </div>
+
+       {/* Energy Level Filter */}
+       <div className="mb-8">
+         <Label className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4 block" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800 }}>
+           Energy Level
+         </Label>
+         <Select value={selectedEnergy} onValueChange={setSelectedEnergy}>
+           <SelectTrigger className="bg-white border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-300">
+             <SelectValue placeholder="All energy levels" />
+           </SelectTrigger>
+           <SelectContent className="bg-white rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+             <SelectItem value="all">All energy levels</SelectItem>
+             <SelectItem value="low">Low (Calm & Relaxed)</SelectItem>
+             <SelectItem value="medium">Medium (Moderate Activity)</SelectItem>
+             <SelectItem value="high">High (Very Active)</SelectItem>
+           </SelectContent>
+         </Select>
+       </div>
+
+       {/* Location Filter */}
+       <div className="mb-8">
+         <Label className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4 block" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800 }}>
+           Location
+         </Label>
+         <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+           <SelectTrigger className="bg-white border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-300">
+             <SelectValue placeholder="All locations" />
+           </SelectTrigger>
+           <SelectContent className="bg-white rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+             <SelectItem value="all">All locations</SelectItem>
+             <SelectItem value="north">North Area</SelectItem>
+             <SelectItem value="south">South Area</SelectItem>
+             <SelectItem value="east">East Area</SelectItem>
+             <SelectItem value="west">West Area</SelectItem>
+             <SelectItem value="central">Central Area</SelectItem>
+           </SelectContent>
+         </Select>
+       </div>
+
+       {/* Good With Filter */}
+       <div className="mb-8">
+         <Label className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4 block" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800 }}>
+           Good With
+         </Label>
+         <div className="space-y-3">
+           <div className="flex items-center space-x-3">
+             <input
+               type="checkbox"
+               id="goodWithKids"
+               checked={goodWithKids}
+               onChange={(e) => setGoodWithKids(e.target.checked)}
+               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+             />
+             <Label htmlFor="goodWithKids" className="text-sm text-gray-700">Kids</Label>
+           </div>
+           <div className="flex items-center space-x-3">
+             <input
+               type="checkbox"
+               id="goodWithDogs"
+               checked={goodWithDogs}
+               onChange={(e) => setGoodWithDogs(e.target.checked)}
+               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+             />
+             <Label htmlFor="goodWithDogs" className="text-sm text-gray-700">Other Dogs</Label>
+           </div>
+           <div className="flex items-center space-x-3">
+             <input
+               type="checkbox"
+               id="goodWithCats"
+               checked={goodWithCats}
+               onChange={(e) => setGoodWithCats(e.target.checked)}
+               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+             />
+             <Label htmlFor="goodWithCats" className="text-sm text-gray-700">Cats</Label>
+           </div>
+         </div>
+       </div>
+
+       {/* Clear Filters Button */}
+       <div className="mb-8">
+         <Button
+           onClick={() => {
+             setAgeRange([0, 15]);
+             setSelectedBreed("all");
+             setSelectedGender("all");
+             setSelectedSize("all");
+             setSelectedEnergy("all");
+             setSelectedLocation("all");
+             setGoodWithKids(false);
+             setGoodWithDogs(false);
+             setGoodWithCats(false);
+           }}
+           variant="outline"
+           size="sm"
+           className="w-full border-2 border-gray-300 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-100 transition-all duration-200 font-medium"
+         >
+           🗑️ Clear All Filters
+         </Button>
+       </div>
+    </div>
+    
+    {/* User Profile Card - Fixed at bottom */}
+    <div className="mt-auto pt-6 border-t border-gray-200">
+      <div className="flex items-center space-x-4 mb-4">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-teal-500 rounded-full flex items-center justify-center shadow-md">
+          <span className="text-white font-bold text-lg">{userInitials}</span>
+        </div>
+        <div>
+          <div className="font-extrabold uppercase tracking-wider text-lg" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>{displayName}</div>
+          <div className="text-sm text-gray-500 capitalize">{user ? user.role : 'Guest'}</div>
+        </div>
+      </div>
+      
+      {/* Login/Logout Button */}
+      {user ? (
+        <Button
+          onClick={onLogout}
+          variant="outline"
+          size="sm"
+          className="w-full border-2 border-gray-300 text-gray-800 rounded-full px-6 py-2 hover:bg-gray-800 hover:text-white transition-all duration-300 font-medium"
+          style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}
+        >
+          Logout
+        </Button>
+      ) : (
+        <Button 
+          onClick={() => setShowAuthModal(true)}
+          variant="outline" 
+          size="sm"
+          className="w-full border-2 border-gray-300 text-gray-800 rounded-full px-6 py-2 hover:bg-gray-800 hover:text-white transition-all duration-300 font-medium"
+          style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}
+        >
+          Login
+        </Button>
+      )}
+    </div>
+  </div>
+</div>
 
                      {/* Main Content - Dog Grid */}
            <div className="flex-1 mr-2">
@@ -337,7 +489,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                   <div className="flex-1">
                     <SplitText
                       text="Don't Buy Love, Adopt It!"
-                      className="text-4xl font-bold text-gray-900 tracking-tight"
+                      className="text-7xl font-bold text-gray-900 tracking-tight"
                       splitType="words"
                       delay={150}
                       duration={0.8}
@@ -392,12 +544,12 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                   <p className="text-gray-500 text-lg">No dogs found matching your criteria.</p>
                 </div>
               ) : (
-                <div className="border border-black rounded-4xl p-8 bg-white animate-grid-entrance">
+                                 <div className="border border-black rounded-4xl p-8 animate-grid-entrance">
                   <div className="grid grid-cols-3 gap-8 justify-items-center">
                     {filteredDogs.map((dog, index) => (
                                              <Card 
                          key={dog.id} 
-                         className="w-90 border border-black shadow-[0_20px_25px_-5px_rgba(0,0,0,0.3)] cursor-pointer group bg-[#8DBFF3] animate-card-entrance"
+                         className="w-90 border border-black shadow-[0_20px_25px_-5px_rgba(0,0,0,0.3)] cursor-pointer group bg-[#67B2FF] animate-card-entrance"
                          style={{ 
                            animationDelay: `${index * 0.08}s`,
                            animationFillMode: 'both'

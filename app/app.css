@@ -480,4 +480,84 @@ html::-webkit-scrollbar-corner {
   .custom-scrollbar-orange::-webkit-scrollbar-corner {
     background: rgba(0, 0, 0, 0.05);
   }
+
+  /* Enhanced Filter Sidebar Styling */
+  .filter-sidebar {
+    box-shadow: 
+      0 20px 40px -12px rgba(0, 0, 0, 0.25),
+      0 8px 16px -4px rgba(0, 0, 0, 0.15),
+      0 4px 8px -2px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(0, 0, 0, 0.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .filter-sidebar:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 25px 50px -12px rgba(0, 0, 0, 0.3),
+      0 12px 24px -4px rgba(0, 0, 0, 0.2),
+      0 6px 12px -2px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* Enhanced filter sections */
+  .filter-section {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+  }
+
+  .filter-section:hover {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Enhanced slider styling */
+  .filter-sidebar [data-radix-slider-track] {
+    background: linear-gradient(90deg, #10b981, #059669);
+    height: 8px;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .filter-sidebar [data-radix-slider-range] {
+    background: linear-gradient(90deg, #059669, #047857);
+    height: 8px;
+    border-radius: 4px;
+  }
+
+  .filter-sidebar [data-radix-slider-thumb] {
+    background: white;
+    border: 3px solid #059669;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .filter-sidebar [data-radix-slider-thumb]:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.4);
+  }
+
+  /* Enhanced select styling */
+  .filter-sidebar .select-trigger {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .filter-sidebar .select-trigger:hover {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
 }
