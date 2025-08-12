@@ -2,6 +2,228 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Custom animations for enhanced user experience */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+/* Performance optimizations */
+.animate-card-entrance,
+.animate-text-slide-in,
+.animate-badge-entrance,
+.animate-button-entrance,
+.animate-grid-entrance {
+  backface-visibility: hidden;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+/* Prevent animation conflicts */
+.animate-card-entrance {
+  animation-fill-mode: forwards !important;
+}
+
+.animate-text-slide-in {
+  animation-fill-mode: forwards !important;
+}
+
+.animate-badge-entrance {
+  animation-fill-mode: forwards !important;
+}
+
+.animate-button-entrance {
+  animation-fill-mode: forwards !important;
+}
+
+.animate-grid-entrance {
+  animation-fill-mode: forwards !important;
+}
+
+/* Dog card entrance animations - Optimized for performance */
+@keyframes card-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-card-entrance {
+  animation: card-entrance 0.8s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+/* Premium hover effects for dog cards - Enhanced smoothness */
+.card-hover-effect {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center bottom;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-12px) scale(1.03) rotateX(2deg);
+  box-shadow: 
+    0 32px 64px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  filter: brightness(1.01) contrast(1.01);
+}
+
+/* Enhanced image hover effect - Minimal and subtle */
+.card-hover-effect:hover img {
+  transform: scale(1.05);
+  filter: brightness(1.02) saturate(1.02);
+}
+
+/* Smooth text hover effects */
+.card-hover-effect:hover h3 {
+  transform: translateY(-2px);
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card-hover-effect:hover .group-hover\:translate-x-1 {
+  transform: translateX(4px);
+}
+
+/* Premium button hover enhancement */
+.card-hover-effect:hover button {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Enhanced badge hover effect */
+.card-hover-effect:hover .backdrop-blur-md {
+  transform: scale(1.1) translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Smooth card content transitions */
+.card-hover-effect * {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Premium glow effect on hover */
+.card-hover-effect:hover {
+  position: relative;
+}
+
+.card-hover-effect:hover::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* Ensure entrance animations don't interfere with hover */
+.animate-card-entrance {
+  animation: card-entrance 0.8s ease-out forwards;
+  will-change: transform, opacity;
+  animation-fill-mode: forwards;
+}
+
+/* Text slide-in animation for card content - Optimized */
+@keyframes text-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-text-slide-in {
+  animation: text-slide-in 0.6s ease-out forwards;
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+/* Ensure text animations don't interfere with hover */
+.animate-text-slide-in.animation-complete {
+  animation: none;
+}
+
+/* Badge entrance animation - Optimized */
+@keyframes badge-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-badge-entrance {
+  animation: badge-entrance 0.4s ease-out forwards;
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+/* Button entrance animation - Optimized */
+@keyframes button-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-button-entrance {
+  animation: button-entrance 0.4s ease-out forwards;
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+/* Grid container entrance animation - Optimized */
+@keyframes grid-entrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-grid-entrance {
+  animation: grid-entrance 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
 @font-face{
     font-family: "KBStickToThePlan";
     src: url("../Web Fonts/ef4a6d6d3f3fddb14ee64704904e9890.eot");

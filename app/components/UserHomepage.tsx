@@ -10,6 +10,7 @@ import { Textarea } from "../components/ui/textarea";
 import { Slider } from "../components/ui/slider";
 import AuthModal from "./AuthModal";
 import RescueRequestModal from "./RescueRequestModal";
+import SplitText from "./SplitText";
 
 interface Dog {
   id: string;
@@ -313,41 +314,56 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                 </div>
             </div>
 
-            {/* User Profile Card (Bottom Left) */}
-            {user && (
-              <div className="bg-black text-white mt-6 sticky border border-black p-4" style={{ top: 'calc(100vh - 120px)' }}>
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold">{userInitials}</span>
-                  </div>
-                  <div>
-                    <div className="font-bold uppercase tracking-wide" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>{displayName}</div>
-                    <div className="text-xs text-gray-300">{user.role}</div>
-                  </div>
+            {/* User Profile Card (Bottom Left) - Always visible */}
+            <div className="bg-black text-white mt-6 sticky border border-black p-4" style={{ top: 'calc(100vh - 120px)' }}>
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold">{userInitials}</span>
+                </div>
+                <div>
+                  <div className="font-bold uppercase tracking-wide" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>{displayName}</div>
+                  <div className="text-xs text-gray-300">{user ? user.role : 'guest'}</div>
                 </div>
               </div>
-            )}
+              
+            </div>
           </div>
 
                      {/* Main Content - Dog Grid */}
            <div className="flex-1 mr-2">
              {/* Main Title and Search Bar */}
              <div className="mb-6">
-               <div className="flex justify-between items-center mb-4">
-                 <h2 className="text-4xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
-                   Don't Buy Love, Adopt It!
-                 </h2>
-                 <div className="flex items-center gap-4">
-                   <div className="relative">
-                     <Input
-                       type="text"
-                       placeholder="SEARCH"
-                       value={searchQuery}
-                       onChange={(e) => setSearchQuery(e.target.value)}
-                       className="w-80 h-12 rounded-full border-2 border-black bg-white text-sm font-bold uppercase tracking-wide placeholder:text-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300"
-                       style={{ fontFamily: 'Inter Black, sans-serif' }}
-                     />
-                   </div>
+                               <div className="flex justify-between items-center mb-4">
+                  <div className="flex-1">
+                    <SplitText
+                      text="Don't Buy Love, Adopt It!"
+                      className="text-4xl font-bold text-gray-900 tracking-tight"
+                      splitType="words"
+                      delay={150}
+                      duration={0.8}
+                      from={{ opacity: 0, y: 60, rotationX: -90 }}
+                      to={{ opacity: 1, y: 0, rotationX: 0 }}
+                      ease="back.out(1.7)"
+                      threshold={0.3}
+                      rootMargin="-50px"
+                      textAlign="left"
+                      onLetterAnimationComplete={() => {
+                        console.log("🎭 Quote animation completed!");
+                      }}
+                      style={{ fontFamily: 'Inter, sans-serif' }}
+                    />
+                  </div>
+                                   <div className="flex items-center gap-4">
+                    <div className="relative animate-fade-in-up" style={{ animationDelay: '0.6s', animationFillMode: 'both' }}>
+                      <Input
+                        type="text"
+                        placeholder="SEARCH"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-80 h-12 rounded-full border-2 border-black bg-white text-sm font-bold uppercase tracking-wide placeholder:text-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300"
+                        style={{ fontFamily: 'Inter Black, sans-serif' }}
+                      />
+                    </div>
                                      <Button 
                     onClick={() => {
                       if (user) {
@@ -362,8 +378,8 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                         }
                       }
                     }}
-                    className="bg-red-500 hover:bg-red-600 text-white font-bold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                    style={{ fontFamily: 'Inter Black, sans-serif' }}
+                    className="bg-red-500 hover:bg-red-600 text-white font-bold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up"
+                    style={{ fontFamily: 'Inter Black, sans-serif', animationDelay: '0.8s', animationFillMode: 'both' }}
                   >
                     🚨 Report Dog for Rescue
                   </Button>
@@ -371,43 +387,60 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                </div>
              </div>
 
-             {filteredDogs.length === 0 ? (
-               <div className="text-center py-12">
-                 <p className="text-gray-500 text-lg">No dogs found matching your criteria.</p>
-               </div>
-             ) : (
-               <div className="border border-black rounded-4xl p-8 bg-white">
-                                 <div className="grid grid-cols-3 gap-8 justify-items-center">
-                    {filteredDogs.map((dog) => (
-                                             <Card key={dog.id} className="w-90 border border-black shadow-[0_20px_25px_-5px_rgba(0,0,0,0.3)] cursor-pointer group bg-[#8DBFF3]">
+                           {filteredDogs.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 text-lg">No dogs found matching your criteria.</p>
+                </div>
+              ) : (
+                <div className="border border-black rounded-4xl p-8 bg-white animate-grid-entrance">
+                  <div className="grid grid-cols-3 gap-8 justify-items-center">
+                    {filteredDogs.map((dog, index) => (
+                                             <Card 
+                         key={dog.id} 
+                         className="w-90 border border-black shadow-[0_20px_25px_-5px_rgba(0,0,0,0.3)] cursor-pointer group bg-[#8DBFF3] animate-card-entrance"
+                         style={{ 
+                           animationDelay: `${index * 0.08}s`,
+                           animationFillMode: 'both'
+                         }}
+                         onAnimationEnd={(e: React.AnimationEvent<HTMLDivElement>) => {
+                           if (e.animationName === 'card-entrance') {
+                             e.currentTarget.classList.add('card-hover-effect');
+                           }
+                         }}
+                       >
                       {/* Top section with name and details */}
                       <CardContent className="text-[#F4F6FF]" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>
-                        <h3 className="text-[#F4F6FF] font-bold text-4xl tracking-wide mb-2 uppercase transition-all duration-300 group-hover:scale-105" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>
+                        <h3 className="text-[#FFFFFF] font-bold text-4xl tracking-wide mb-2 uppercase transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) animate-text-slide-in" style={{ fontFamily: 'KBStickToThePlan, sans-serif', animationDelay: '0.15s' }}>
                           {dog.name}
                         </h3>
-                        <div className="text-[#F4F6FF] font-medium text-sm space-y-1 uppercase mb-4 transition-all duration-300" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>
-                          <div className="transition-transform duration-300 group-hover:translate-x-1">AGE: {dog.age}</div>
-                          <div className="transition-transform duration-300 group-hover:translate-x-1">GENDER: {dog.gender.toUpperCase()}</div>
+                        <div className="text-[#F4F6FF] font-medium text-sm space-y-1 uppercase mb-4 transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94)" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>
+                          <div className="transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) animate-text-slide-in" style={{ animationDelay: '0.2s' }}>AGE: {dog.age}</div>
+                          <div className="transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) animate-text-slide-in" style={{ animationDelay: '0.25s' }}>GENDER: {dog.gender.toUpperCase()}</div>
                         </div>
                         
                         {/* Image section with breed badge and adopt button */}
                         <div className="relative rounded-2xl overflow-hidden -mx-3 -mb-3 h-55">
-                          <img
+                          {/* <img
                             src={dog.imageUrl || '/placeholder-dog.jpg'}
                             alt={dog.name}
                             className="w-full h-full object-cover object-center transition-all duration-300 ease-out group-hover:scale-105"
-                          />
+                          /> */}
+                            <img
+                             src={dog.imageUrl || '/placeholder-dog.jpg'}
+                             alt={dog.name}
+                             className="w-full h-full object-cover object-center transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+                           />
                           
                           {/* Breed badge overlay */}
-                          <div className="absolute top-2 left-2 backdrop-blur-md bg-black/50 border border-white/50 text-white px-7 py-1 rounded-full text-sm font-medium transition-all duration-300 ease-out group-hover:scale-105" style={{ fontFamily: 'Instrument Sans, sans-serif' }}>
+                          <div className="absolute top-2 left-2 backdrop-blur-md bg-black/50 border border-white/50 text-white px-7 py-1 rounded-full text-sm font-medium transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) group-hover:scale-105 animate-badge-entrance" style={{ fontFamily: 'Instrument Sans, sans-serif', animationDelay: '0.3s' }}>
                             {dog.breed}
                           </div>
                           
                           {/* Adopt button overlay at bottom */}
-                          <div className="absolute bottom-2 left-2 right-2">
-                                                                                     <Button
+                          <div className="absolute bottom-2 left-2 right-2 animate-button-entrance" style={{ animationDelay: '0.35s' }}>
+                            <Button
                               onClick={() => handleAdoptClick(dog)}
-                              className="w-full bg-white text-black font-bold text-sm py-4 rounded-full transition-all duration-300 ease-out shadow-lg hover:shadow-xl uppercase tracking-wide transform hover:bg-gradient-to-r hover:from-green-500 hover:to-green-600 hover:text-white hover:scale-95"
+                              className="w-full bg-white text-black font-bold text-sm py-4 rounded-full transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) shadow-lg hover:shadow-xl uppercase tracking-wide transform hover:bg-gradient-to-r hover:from-green-500 hover:to-green-600 hover:text-white hover:scale-95"
                               style={{ fontFamily: 'Instrument Sans, sans-serif' }}
                             >
                               ADOPT ME
