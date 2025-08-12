@@ -6,16 +6,26 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { cn } from "../lib/utils";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+
+interface User {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
 
 interface RescueRequestModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  user?: User | null;
 }
 
-export default function RescueRequestModal({ isOpen, onClose, onSuccess }: RescueRequestModalProps) {
+export default function RescueRequestModal({ isOpen, onClose, onSuccess, user }: RescueRequestModalProps) {
   const [formData, setFormData] = useState({
-    reporterName: '',
+    reporterName: user ? `${user.firstName} ${user.lastName}` : '',
     contactDetails: '',
     location: '',
     dogType: 'stray',
@@ -71,6 +81,35 @@ export default function RescueRequestModal({ isOpen, onClose, onSuccess }: Rescu
     setSubmitting(true);
     setError('');
 
+    // Check if user is logged in
+    if (!user) {
+      setError('⚠️ You must be logged in to submit a rescue request. Please login and try again.');
+      setSubmitting(false);
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.reporterName.trim()) {
+      setError('Reporter name is required');
+      setSubmitting(false);
+      return;
+    }
+    if (!formData.contactDetails.trim()) {
+      setError('Contact details are required');
+      setSubmitting(false);
+      return;
+    }
+    if (!formData.location.trim()) {
+      setError('Location is required');
+      setSubmitting(false);
+      return;
+    }
+    if (!formData.description.trim()) {
+      setError('Description is required');
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const submitData = new FormData();
       
@@ -84,19 +123,29 @@ export default function RescueRequestModal({ isOpen, onClose, onSuccess }: Rescu
         submitData.append('images', file);
       });
 
-      const response = await fetch('http://localhost:5000/api/rescue', {
+      // Get token for authenticated request
+      const token = localStorage.getItem('token');
+
+      console.log('🚨 Submitting rescue request:', formData);
+      console.log('🚨 Selected files:', selectedFiles.length);
+
+      const response = await fetch('http://localhost:5000/api/rescue/submit', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: submitData
       });
 
       const result = await response.json();
+      console.log('🚨 Rescue request response:', result);
 
       if (response.ok) {
         onSuccess();
         onClose();
         // Reset form
         setFormData({
-          reporterName: '',
+          reporterName: user ? `${user.firstName} ${user.lastName}` : '',
           contactDetails: '',
           location: '',
           dogType: 'stray',
@@ -104,6 +153,7 @@ export default function RescueRequestModal({ isOpen, onClose, onSuccess }: Rescu
         });
         setSelectedFiles([]);
         setPreviews([]);
+        setError('');
       } else {
         setError(result.error || 'Failed to submit rescue request');
       }
@@ -115,198 +165,152 @@ export default function RescueRequestModal({ isOpen, onClose, onSuccess }: Rescu
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-3xl mx-auto max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-lg border-0 shadow-2xl">
-        <CardHeader className="border-b border-gray-200/50">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-xl">
-                <span className="text-2xl">🚨</span>
-              </div>
-              <div>
-                <CardTitle className="text-3xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">
-                  Report Dog for Rescue
-                </CardTitle>
-                <CardDescription className="text-gray-600 font-medium">
-                  Help us save a dog in need by providing detailed information
-                </CardDescription>
-              </div>
-            </div>
-            <Button
-              onClick={onClose}
-              variant="ghost"
-              size="sm"
-              className="text-gray-400 hover:text-gray-600 h-10 w-10 p-0"
-            >
-              ✕
-            </Button>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center space-x-2">
-              <span className="text-lg">⚠️</span>
-              <span className="font-medium">{error}</span>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white p-8 rounded-2xl shadow-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold !text-gray-800 mb-2" style={{ fontFamily: 'Inter Black, sans-serif' }}>
+            🚨 Report Dog for Rescue
+          </DialogTitle>
+          <DialogDescription className="text-gray-600 text-base">
+            Help us save a dog in need by providing detailed information. Fields marked with * are required.
+          </DialogDescription>
+          {!user && (
+            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-amber-800 text-sm font-medium">
+                ⚠️ <strong>Guest Mode:</strong> You can view and fill out this form, but you must login to submit your report.
+              </p>
             </div>
           )}
+        </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Reporter Information */}
-            <Card className="border border-gray-200 bg-gray-50/50">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <span className="text-xl">👤</span>
-                  Your Information
-                </CardTitle>
-                <CardDescription>
-                  Please provide your contact details so we can reach you
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <Label htmlFor="reporterName" className="text-sm font-semibold text-gray-700">Your Name *</Label>
-                    <Input
-                      id="reporterName"
-                      name="reporterName"
-                      type="text"
-                      required
-                      value={formData.reporterName}
-                      onChange={handleInputChange}
-                      placeholder="Enter your full name"
-                      className="border-gray-300 focus:border-red-500 focus:ring-red-500/20 transition-all duration-200"
-                    />
-                  </div>
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800 text-sm font-medium">{error}</p>
+          </div>
+        )}
 
-                  <div className="space-y-3">
-                    <Label htmlFor="contactDetails" className="text-sm font-semibold text-gray-700">Contact Details *</Label>
-                    <Input
-                      id="contactDetails"
-                      name="contactDetails"
-                      type="text"
-                      required
-                      value={formData.contactDetails}
-                      onChange={handleInputChange}
-                      placeholder="Phone number and/or email"
-                      className="border-gray-300 focus:border-red-500 focus:ring-red-500/20 transition-all duration-200"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Reporter Information */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold !text-gray-800" style={{ fontFamily: 'Inter Black, sans-serif' }}>Your Information</h3>
+            
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="reporterName" className="text-sm font-medium text-gray-700">Your Name *</Label>
+                <Input
+                  id="reporterName"
+                  name="reporterName"
+                  value={formData.reporterName}
+                  onChange={handleInputChange}
+                  placeholder="Enter your full name"
+                  className="mt-1 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all duration-300"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="contactDetails" className="text-sm font-medium text-gray-700">Contact Details *</Label>
+                <Input
+                  id="contactDetails"
+                  name="contactDetails"
+                  value={formData.contactDetails}
+                  onChange={handleInputChange}
+                  placeholder="Phone number or email"
+                  className="mt-1 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all duration-300"
+                  required
+                />
+              </div>
+            </div>
+          </div>
 
-            {/* Dog Information */}
-            <Card className="border border-gray-200 bg-blue-50/30">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <span className="text-xl">🐕</span>
-                  Dog Information
-                </CardTitle>
-                <CardDescription>
-                  Tell us about the dog that needs rescue
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <Label htmlFor="location" className="text-sm font-semibold text-gray-700">Dog's Location *</Label>
-                  <Input
-                    id="location"
-                    name="location"
-                    type="text"
-                    required
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    placeholder="Street address or nearby landmark"
-                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200"
-                  />
-                </div>
+          {/* Dog Information */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold !text-gray-800" style={{ fontFamily: 'Inter Black, sans-serif' }}>Dog Information</h3>
+            
+            <div>
+              <Label htmlFor="location" className="text-sm font-medium text-gray-700">Location *</Label>
+              <Input
+                id="location"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                placeholder="Where is the dog located? Be as specific as possible"
+                className="mt-1 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all duration-300"
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="dogType" className="text-sm font-medium text-gray-700">Dog Type *</Label>
+              <Select value={formData.dogType} onValueChange={(value) => setFormData({...formData, dogType: value})}>
+                <SelectTrigger className="mt-1 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all duration-300">
+                  <SelectValue placeholder="Select dog type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stray">Stray Dog</SelectItem>
+                  <SelectItem value="owned">Owner's Dog (needs help)</SelectItem>
+                  <SelectItem value="abandoned">Abandoned Dog</SelectItem>
+                  <SelectItem value="injured">Injured Dog</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="description" className="text-sm font-medium text-gray-700">Description *</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Describe the dog's condition, behavior, size, color, and any immediate needs..."
+                className="mt-1 min-h-[100px] focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all duration-300"
+                required
+              />
+            </div>
+          </div>
 
-                <div className="space-y-3">
-                  <Label htmlFor="dogType" className="text-sm font-semibold text-gray-700">Dog Type *</Label>
-                  <Select value={formData.dogType} onValueChange={(value) => setFormData(prev => ({ ...prev, dogType: value }))}>
-                    <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200">
-                      <SelectValue placeholder="Select dog type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="stray">🏃 Stray Dog (needs rescue from street)</SelectItem>
-                      <SelectItem value="owned">🏠 My Dog (needs to be rescued)</SelectItem>
-                      <SelectItem value="abandoned">😢 Abandoned Dog (left by owner)</SelectItem>
-                      <SelectItem value="injured">🩹 Injured Dog (needs medical attention)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-3">
-                  <Label htmlFor="description" className="text-sm font-semibold text-gray-700">Description *</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    required
-                    rows={4}
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    placeholder="Describe the dog's condition, size, color, any urgent needs..."
-                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200 resize-none"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Image Upload */}
-            <Card className="border border-gray-200 bg-purple-50/30">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <span className="text-xl">📸</span>
-                  Dog Photos
-                </CardTitle>
-                <CardDescription>
-                  Add photos to help rescuers identify the dog (maximum 5 photos)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-3">
-                  <Button
-                    type="button"
-                    onClick={() => cameraInputRef.current?.click()}
-                    variant="outline"
-                    className="flex-1 border-blue-300 text-blue-700 hover:bg-blue-50 font-semibold"
-                  >
-                    📷 Take Photo
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    variant="outline"
-                    className="flex-1 border-green-300 text-green-700 hover:bg-green-50 font-semibold"
-                  >
-                    🖼️ Choose Photos
-                  </Button>
-                </div>
+          {/* Photos */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold !text-gray-800" style={{ fontFamily: 'Inter Black, sans-serif' }}>Photos</h3>
+            <div className="flex gap-3">
+              <Button 
+                type="button" 
+                onClick={() => cameraInputRef.current?.click()} 
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                📸 Take Photo
+              </Button>
+              <Button 
+                type="button" 
+                onClick={() => fileInputRef.current?.click()} 
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                🖼️ Choose Photos
+              </Button>
+            </div>
               
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  multiple
-                  onChange={(e) => handleFileSelection(e.target.files)}
-                  className="hidden"
-                />
-                
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => handleFileSelection(e.target.files)}
-                  className="hidden"
-                />
-                
-                <p className="text-sm text-gray-500 text-center">Maximum 5 photos. Click "Take Photo" to use camera or "Choose Photos" to select from gallery.</p>
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              onChange={(e) => handleFileSelection(e.target.files)}
+              className="hidden"
+            />
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => handleFileSelection(e.target.files)}
+              className="hidden"
+            />
+            
+            <p className="text-sm text-gray-500">Maximum 5 photos. Clear photos help rescuers assess the situation better.</p>
 
                 {/* Image Previews */}
                 {previews.length > 0 && (
@@ -332,37 +336,28 @@ export default function RescueRequestModal({ isOpen, onClose, onSuccess }: Rescu
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+          </div>
 
-            {/* Submit Button */}
-            <div className="flex gap-4 pt-6 border-t border-gray-200">
-              <Button
-                type="button"
-                onClick={onClose}
-                variant="outline"
-                className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
-              >
-                {submitting ? (
-                  <span className="flex items-center justify-center">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Submitting...
-                  </span>
-                ) : (
-                  '🚨 Submit Rescue Request'
-                )}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+          <DialogFooter className="gap-3 pt-6">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="px-6 py-2"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={submitting || !user}
+              className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 font-bold"
+              style={{ fontFamily: 'Inter Black, sans-serif' }}
+            >
+              {submitting ? 'Submitting...' : user ? '🚨 Submit Rescue Request' : '🔒 Login Required'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

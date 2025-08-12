@@ -9,6 +9,7 @@ import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Slider } from "../components/ui/slider";
 import AuthModal from "./AuthModal";
+import RescueRequestModal from "./RescueRequestModal";
 
 interface Dog {
   id: string;
@@ -44,6 +45,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
   const [selectedDog, setSelectedDog] = useState<Dog | null>(null);
   const [showAdoptModal, setShowAdoptModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showRescueModal, setShowRescueModal] = useState(false);
 
   // Filter states
   const [ageRange, setAgeRange] = useState([0, 15]);
@@ -335,15 +337,36 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                  <h2 className="text-4xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: 'Inter, sans-serif' }}>
                    Don't Buy Love, Adopt It!
                  </h2>
-                 <div className="relative">
-                   <Input
-                     type="text"
-                     placeholder="SEARCH"
-                     value={searchQuery}
-                     onChange={(e) => setSearchQuery(e.target.value)}
-                     className="w-80 h-12 rounded-full border-2 border-black bg-white text-sm font-bold uppercase tracking-wide placeholder:text-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300"
-                     style={{ fontFamily: 'Inter Black, sans-serif' }}
-                   />
+                 <div className="flex items-center gap-4">
+                   <div className="relative">
+                     <Input
+                       type="text"
+                       placeholder="SEARCH"
+                       value={searchQuery}
+                       onChange={(e) => setSearchQuery(e.target.value)}
+                       className="w-80 h-12 rounded-full border-2 border-black bg-white text-sm font-bold uppercase tracking-wide placeholder:text-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300"
+                       style={{ fontFamily: 'Inter Black, sans-serif' }}
+                     />
+                   </div>
+                                     <Button 
+                    onClick={() => {
+                      if (user) {
+                        setShowRescueModal(true);
+                      } else {
+                        // Allow guests to access the form but show warning
+                        const proceed = confirm("⚠️ GUEST ACCESS WARNING\n\nYou're accessing the rescue reporting form as a guest. While you can view and fill out the form, you'll need to login to actually submit your report.\n\nWould you like to continue? (Recommended: Login first for full access)");
+                        if (proceed) {
+                          setShowRescueModal(true);
+                        } else {
+                          setShowAuthModal(true);
+                        }
+                      }
+                    }}
+                    className="bg-red-500 hover:bg-red-600 text-white font-bold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                    style={{ fontFamily: 'Inter Black, sans-serif' }}
+                  >
+                    🚨 Report Dog for Rescue
+                  </Button>
                  </div>
                </div>
              </div>
@@ -490,6 +513,17 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onAuthSuccess={onLogin || (() => {})}
+      />
+
+      {/* Rescue Request Modal */}
+      <RescueRequestModal 
+        isOpen={showRescueModal} 
+        onClose={() => setShowRescueModal(false)} 
+        onSuccess={() => {
+          alert("Rescue request submitted successfully! Rescuers in your area will be notified.");
+          setShowRescueModal(false);
+        }}
+        user={user}
       />
     </div>
   );

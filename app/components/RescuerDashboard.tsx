@@ -748,33 +748,36 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
 
         {/* Add Dog Modal */}
         <Dialog open={showAddDogForm} onOpenChange={setShowAddDogForm}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar-orange">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white p-8 rounded-2xl shadow-2xl">
             <DialogHeader>
-              <DialogTitle className="!text-gray-800" style={{ fontFamily: 'Kalam, cursive' }}>Add New Dog</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-2xl font-bold !text-gray-800 mb-2" style={{ fontFamily: 'Inter Black, sans-serif' }}>
+                ➕ Add New Dog
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 text-base">
                 Add a new dog to the adoption center database. All fields marked with * are required.
               </DialogDescription>
             </DialogHeader>
             
             <form onSubmit={handleAddDogSubmit} className="space-y-6">
               {/* Basic Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold !text-gray-800" style={{ fontFamily: 'Kalam, cursive' }}>Basic Information</h3>
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold !text-gray-800" style={{ fontFamily: 'Inter Black, sans-serif' }}>Basic Information</h3>
                 
                 <div>
-                  <Label htmlFor="dogName">Dog Name *</Label>
+                  <Label htmlFor="dogName" className="text-sm font-medium text-gray-700">Dog Name *</Label>
                   <Input
                     id="dogName"
                     value={dogForm.name}
                     onChange={(e) => setDogForm({...dogForm, name: e.target.value})}
                     placeholder="Enter the dog's name"
+                    className="mt-1 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
                     required
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="dogAge">Age (years) *</Label>
+                    <Label htmlFor="dogAge" className="text-sm font-medium text-gray-700">Age (years) *</Label>
                     <Input
                       id="dogAge"
                       type="number"
@@ -783,14 +786,15 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
                       value={dogForm.age}
                       onChange={(e) => setDogForm({...dogForm, age: e.target.value})}
                       placeholder="e.g., 3"
+                      className="mt-1 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
                       required
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="dogGender">Gender *</Label>
+                    <Label htmlFor="dogGender" className="text-sm font-medium text-gray-700">Gender *</Label>
                     <Select value={dogForm.gender} onValueChange={(value) => setDogForm({...dogForm, gender: value})}>
-                      <SelectTrigger>
+                      <SelectTrigger className="mt-1 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300">
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent>
@@ -814,7 +818,7 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
               </div>
 
               {/* Location & Details */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <h3 className="text-lg font-semibold !text-gray-800" style={{ fontFamily: 'Kalam, cursive' }}>Location & Details</h3>
                 
                 <div>
@@ -842,7 +846,7 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
               </div>
 
               {/* Image Upload */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <h3 className="text-lg font-semibold !text-gray-800" style={{ fontFamily: 'Kalam, cursive' }}>Photo</h3>
                 
                 <div>
@@ -872,7 +876,7 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
               </div>
 
               {/* Special Options */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <h3 className="text-lg font-semibold !text-gray-800" style={{ fontFamily: 'Kalam, cursive' }}>Special Status</h3>
                 
                 <div className="flex items-center space-x-2">
@@ -887,12 +891,21 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
                 </div>
               </div>
               
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setShowAddDogForm(false)}>
+              <DialogFooter className="gap-3 pt-6">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowAddDogForm(false)}
+                  className="px-6 py-2"
+                >
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-orange-500 hover:bg-orange-600" style={{ fontFamily: 'Kalam, cursive' }}>
-                  Add Dog to Database
+                <Button 
+                  type="submit" 
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 font-bold" 
+                  style={{ fontFamily: 'Inter Black, sans-serif' }}
+                >
+                  ➕ Add Dog to Database
                 </Button>
               </DialogFooter>
             </form>
