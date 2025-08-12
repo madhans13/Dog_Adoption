@@ -420,10 +420,14 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// Submit rescue request (store in database)
-app.post('/api/rescue', upload.array('images', 5), async (req, res) => {
+// Submit rescue request (store in database) - OLD ENDPOINT
+app.post('/api/rescue', authenticateToken, upload.array('images', 5), async (req, res) => {
   try {
     const { reporterName, contactDetails, location, dogType, description } = req.body;
+    const userId = req.user.id;
+    
+    console.log('Received rescue request data:', req.body);
+    console.log('Received files:', req.files);
     
     // Handle multiple image uploads
     const imageUrls = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
@@ -431,12 +435,13 @@ app.post('/api/rescue', upload.array('images', 5), async (req, res) => {
     // Insert into database (using correct column names from schema)
     const query = `
       INSERT INTO "RescueRequest" 
-      (location, description, animal_type, contact_phone, image_urls, status, notes, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      (user_id, location, description, animal_type, contact_phone, image_urls, status, notes, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
     
     const values = [
+      userId,
       location,
       description,
       dogType,
@@ -447,8 +452,12 @@ app.post('/api/rescue', upload.array('images', 5), async (req, res) => {
       new Date()
     ];
 
+    console.log('Executing rescue request query with values:', values);
+
     const result = await pool.query(query, values);
     const newRequest = result.rows[0];
+    
+    console.log('Rescue request result:', newRequest);
     
     res.status(201).json({
       message: 'Rescue request submitted successfully',
@@ -459,13 +468,79 @@ app.post('/api/rescue', upload.array('images', 5), async (req, res) => {
         location: newRequest.location,
         dogType: newRequest.animal_type,
         description: newRequest.description,
-        imageUrls: newRequest.image_urls.map(url => `http://localhost:5000${url}`),
+        imageUrls: newRequest.image_urls ? newRequest.image_urls.map(url => `http://localhost:5000${url}`) : [],
         status: newRequest.status,
-        submittedAt: newRequest.created_at
+        submittedAt: newRequest.created_at,
+        reporterId: newRequest.user_id
       }
     });
   } catch (error) {
     console.error('Rescue request error:', error);
+    res.status(500).json({ error: 'Failed to submit rescue request' });
+  }
+});
+
+// NEW Submit rescue request endpoint (aligned with frontend form)
+app.post('/api/rescue/submit', authenticateToken, upload.array('images', 5), async (req, res) => {
+  try {
+    const { reporterName, contactDetails, location, dogType, description } = req.body;
+    const userId = req.user.id;
+    
+    console.log('📝 NEW Rescue submit endpoint - Received data:', req.body);
+    console.log('📝 NEW Rescue submit endpoint - Received files:', req.files?.length || 0);
+    
+    // Validate required fields
+    if (!location || !description || !contactDetails || !reporterName) {
+      return res.status(400).json({ error: 'Missing required fields: location, description, contactDetails, and reporterName are required' });
+    }
+    
+    // Handle multiple image uploads
+    const imageUrls = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    
+    // Insert into database (using correct column names from schema)
+    const query = `
+      INSERT INTO "RescueRequest" 
+      (user_id, location, description, animal_type, contact_phone, image_urls, status, notes, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+    `;
+    
+    const values = [
+      userId,
+      location,
+      description,
+      dogType || 'stray',
+      contactDetails,
+      imageUrls,
+      'open',
+      `Reporter: ${reporterName}`,
+      new Date()
+    ];
+
+    console.log('📝 Executing NEW rescue request query with values:', values);
+
+    const result = await pool.query(query, values);
+    const newRequest = result.rows[0];
+    
+    console.log('📝 NEW Rescue request result:', newRequest);
+    
+    res.status(201).json({
+      message: 'Rescue request submitted successfully',
+      request: {
+        id: newRequest.id,
+        reporterName: reporterName,
+        contactDetails: newRequest.contact_phone,
+        location: newRequest.location,
+        dogType: newRequest.animal_type,
+        description: newRequest.description,
+        imageUrls: newRequest.image_urls ? newRequest.image_urls.map(url => `http://localhost:5000${url}`) : [],
+        status: newRequest.status,
+        submittedAt: newRequest.created_at,
+        reporterId: newRequest.user_id
+      }
+    });
+  } catch (error) {
+    console.error('📝 NEW Rescue request error:', error);
     res.status(500).json({ error: 'Failed to submit rescue request' });
   }
 });
