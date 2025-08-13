@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Slider } from "../components/ui/slider";
-import AuthModal from "./AuthModal";
+import LoginForm from "./LoginForm";
 import RescueRequestModal from "./RescueRequestModal";
 import SplitText from "./SplitText";
 import DogAdoptionNavigation from "./DogAdoptionNavigation";
@@ -49,7 +49,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDog, setSelectedDog] = useState<Dog | null>(null);
   const [showAdoptModal, setShowAdoptModal] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showLoginForm, setShowLoginForm] = useState(false);
   const [showRescueModal, setShowRescueModal] = useState(false);
 
   // Filter states
@@ -543,7 +543,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
         </Button>
       ) : (
         <Button 
-          onClick={() => setShowAuthModal(true)}
+          onClick={() => setShowLoginForm(true)}
           variant="outline" 
           size="sm"
           className="w-full border-2 border-gray-300 text-gray-800 rounded-full px-6 py-2 hover:bg-gray-800 hover:text-white transition-all duration-300 font-medium"
@@ -585,7 +585,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                         if (proceed) {
                           setShowRescueModal(true);
                         } else {
-                         setShowAuthModal(true);
+                         setShowLoginForm(true);
                         }
                        }
                      }}
@@ -749,12 +749,13 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
         </DialogContent>
       </Dialog>
 
-      {/* Auth Modal for guests */}
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onAuthSuccess={onLogin || (() => {})}
-      />
+      {/* Login Form for guests */}
+      {showLoginForm && (
+        <LoginForm
+          onClose={() => setShowLoginForm(false)}
+          onAuthSuccess={onLogin || (() => {})}
+        />
+      )}
 
       {/* Rescue Request Modal */}
       <RescueRequestModal 

@@ -5,13 +5,12 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
-interface AuthModalProps {
-  isOpen: boolean;
+interface LoginFormProps {
   onClose: () => void;
   onAuthSuccess: (user: any, token: string) => void;
 }
 
-export default function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
+export default function LoginForm({ onClose, onAuthSuccess }: LoginFormProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
@@ -61,21 +60,22 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalP
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
-      <Card className="w-full max-w-md mx-auto bg-white border border-gray-200 shadow-sm">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[99999] p-4">
+      <Card className="w-full max-w-md mx-auto bg-white border border-gray-200 shadow-2xl">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle 
                 className="text-2xl font-bold mb-1"
-                style={{ color: '#111827', fontSize: '2.5rem', fontWeight: '700' }}
+                style={{ color: '#111827', fontSize: '1.5rem', fontWeight: '700' }}
               >
                 {isLogin ? 'Sign In' : 'Create Account'}
               </CardTitle>
-              <CardDescription className="text-gray-500" style={{ color: '#111827', fontSize: '1rem', fontWeight: '500' }}>
+              <CardDescription 
+                className="text-base"
+                style={{ color: '#4B5563', fontSize: '1rem' }}
+              >
                 {isLogin ? 'Access your account' : 'Join to help rescue dogs'}
               </CardDescription>
             </div>
@@ -97,7 +97,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalP
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email</Label>
               <Input
@@ -107,21 +107,21 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalP
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="Enter your email"
-                className="border-gray-300 focus:border-blue-500 focus:ring-0 hover:border-gray-300"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Enter your password"
-                className="border-gray-300 focus:border-blue-500 focus:ring-0 hover:border-gray-300"
+                                 className="border-gray-300 focus:border-blue-500 focus:ring-0 hover:border-gray-300"
+               />
+             </div>
+ 
+             <div className="space-y-2">
+               <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
+               <Input
+                 id="password"
+                 type="password"
+                 required
+                 minLength={6}
+                 value={formData.password}
+                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                 placeholder="Enter your password"
+                 className="border-gray-300 focus:border-blue-500 focus:ring-0 hover:border-gray-300"
               />
             </div>
 
@@ -136,20 +136,20 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalP
                       required
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      placeholder="First name"
-                      className="border-gray-300 focus:border-blue-500 focus:ring-0 hover:border-gray-300"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      required
-                      value={formData.lastName}
-                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      placeholder="Last name"
-                      className="border-gray-300 focus:border-blue-500 focus:ring-0 hover:border-gray-300"
+                                           placeholder="First name"
+                     className="border-gray-300 focus:border-blue-500 focus:ring-0 hover:border-gray-300"
+                   />
+                 </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">Last Name</Label>
+                   <Input
+                     id="lastName"
+                     type="text"
+                     required
+                     value={formData.lastName}
+                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                     placeholder="Last name"
+                     className="border-gray-300 focus:border-gray-300 focus:border-blue-500 focus:ring-0"
                     />
                   </div>
                 </div>
@@ -161,8 +161,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalP
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="Phone number"
-                    className="border-gray-300 focus:border-blue-500 focus:ring-0 hover:border-gray-300"
+                                         placeholder="Phone number"
+                     className="border-gray-300 focus:border-blue-500 focus:ring-0 hover:border-gray-300"
                   />
                 </div>
 
@@ -171,17 +171,13 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalP
                   <Select 
                     value={formData.role} 
                     onValueChange={(value) => setFormData({ ...formData, role: value })}
-                    name="role"
                   >
-                    <SelectTrigger 
-                      id="role"
-                      className="w-full border-gray-300 focus:border-blue-500 focus:ring-0 bg-white hover:border-gray-300"
-                    >
+                                         <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-0 bg-white hover:border-gray-300">
                       <SelectValue placeholder="Choose your role" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-sm z-[10000]">
-                      <SelectItem value="user" className="bg-white hover:bg-white">User (Adopt dogs)</SelectItem>
-                      <SelectItem value="rescuer" className="bg-white hover:bg-white">Rescuer (Rescue dogs)</SelectItem>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg z-[100000]">
+                                             <SelectItem value="user" className="hover:bg-white">User (Adopt dogs)</SelectItem>
+                       <SelectItem value="rescuer" className="hover:bg-white">Rescuer (Rescue dogs)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
