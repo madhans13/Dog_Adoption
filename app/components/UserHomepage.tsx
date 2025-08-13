@@ -11,6 +11,11 @@ import { Slider } from "../components/ui/slider";
 import AuthModal from "./AuthModal";
 import RescueRequestModal from "./RescueRequestModal";
 import SplitText from "./SplitText";
+import DogAdoptionNavigation from "./DogAdoptionNavigation";
+
+// Cache for API responses
+const dogCache = new Map<string, { data: Dog[], timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 interface Dog {
   id: string;
@@ -47,10 +52,10 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showRescueModal, setShowRescueModal] = useState(false);
 
-     // Filter states
-   const [ageRange, setAgeRange] = useState([0, 15]);
-   const [selectedBreed, setSelectedBreed] = useState("all");
-   const [selectedGender, setSelectedGender] = useState("all");
+  // Filter states
+  const [ageRange, setAgeRange] = useState([0, 15]);
+  const [selectedBreed, setSelectedBreed] = useState("all");
+  const [selectedGender, setSelectedGender] = useState("all");
    const [selectedSize, setSelectedSize] = useState("all");
    const [selectedEnergy, setSelectedEnergy] = useState("all");
    const [selectedLocation, setSelectedLocation] = useState("all");
@@ -73,18 +78,43 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
     fetchDogs();
   }, []);
 
-     // Use useMemo instead of useEffect to prevent unnecessary re-renders
+     // Debounced search to prevent excessive filtering
+     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+     
+     useEffect(() => {
+       const timer = setTimeout(() => {
+         setDebouncedSearchQuery(searchQuery);
+       }, 300); // 300ms debounce
+       
+       return () => clearTimeout(timer);
+     }, [searchQuery]);
+
+     // Optimized filtering with memoization
      const filteredDogs = useMemo(() => {
-       if (!Array.isArray(dogs)) {
+       if (!Array.isArray(dogs) || dogs.length === 0) {
          return [];
        }
+       
+       // Early return if no filters applied
+       const hasFilters = debouncedSearchQuery || 
+         ageRange[0] > 0 || ageRange[1] < 15 ||
+         selectedBreed !== "all" || selectedGender !== "all" ||
+         selectedSize !== "all" || selectedEnergy !== "all" ||
+         selectedLocation !== "all" || goodWithKids || goodWithDogs || goodWithCats;
+         
+       if (!hasFilters) {
+         return dogs;
+       }
+       
        let filtered = dogs;
 
        // Search filter
-       if (searchQuery) {
+       if (debouncedSearchQuery) {
+         const query = debouncedSearchQuery.toLowerCase();
          filtered = filtered.filter(dog => 
-           dog.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           dog.breed.toLowerCase().includes(searchQuery.toLowerCase())
+           dog.name.toLowerCase().includes(query) ||
+           dog.breed.toLowerCase().includes(query) ||
+           dog.location.toLowerCase().includes(query)
          );
        }
 
@@ -142,34 +172,72 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
        }
 
        return filtered;
-     }, [dogs, searchQuery, ageRange, selectedBreed, selectedGender, selectedSize, selectedEnergy, selectedLocation, goodWithKids, goodWithDogs, goodWithCats]);
+     }, [dogs, debouncedSearchQuery, ageRange, selectedBreed, selectedGender, selectedSize, selectedEnergy, selectedLocation, goodWithKids, goodWithDogs, goodWithCats]);
 
-  const fetchDogs = async () => {
+  const fetchDogs = useCallback(async () => {
+    const cacheKey = 'dogs_list';
+    const cached = dogCache.get(cacheKey);
+    
+    // Check cache first
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      setDogs(cached.data);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch('http://localhost:5000/api/dogs');
+      // Start with optimistic UI - show skeleton while loading
+      setLoading(true);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      
+      const response = await fetch('http://localhost:5000/api/dogs', {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
       if (response.ok) {
         const data = await response.json();
         console.log('🐕 Dogs API response:', data);
-        // Ensure we're setting an array
+        
+        let dogsData: Dog[] = [];
         if (Array.isArray(data)) {
-          setDogs(data);
+          dogsData = data;
         } else if (data && Array.isArray(data.dogs)) {
-          setDogs(data.dogs);
+          dogsData = data.dogs;
         } else {
           console.error('API did not return array format:', data);
-          setDogs([]);
+          dogsData = [];
         }
+        
+        // Cache the response
+        dogCache.set(cacheKey, { data: dogsData, timestamp: Date.now() });
+        setDogs(dogsData);
       } else {
-        console.error('Failed to fetch dogs');
+        console.error('Failed to fetch dogs:', response.status, response.statusText);
         setDogs([]);
       }
     } catch (error) {
-      console.error('Error fetching dogs:', error);
-      setDogs([]);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn('Request timed out - using cached data if available');
+        const cached = dogCache.get(cacheKey);
+        if (cached) {
+          setDogs(cached.data);
+        }
+      } else {
+        console.error('Error fetching dogs:', error);
+        setDogs([]);
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
      // Helper function to determine dog size based on breed
    const getDogSize = (breed: string): string => {
@@ -195,7 +263,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
 
 
 
-       const getUniqueBreeds = () => {
+  const getUniqueBreeds = () => {
     if (!Array.isArray(dogs)) return [];
     const breeds = dogs.map(dog => dog.breed);
     return [...new Set(breeds)];
@@ -241,7 +309,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
     setShowAdoptModal(true);
   };
 
-  const handleAdoptionSubmit = async (e: React.FormEvent) => {
+  const handleAdoptionSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     // Here you would typically send the adoption request to your backend
     console.log("Adoption request submitted:", {
@@ -250,7 +318,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
     });
     setShowAdoptModal(false);
     // You could show a success message here
-  };
+  }, [selectedDog, adoptionForm]);
 
   const userInitials = user 
     ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase()
@@ -260,12 +328,25 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
     ? `${user.firstName} ${user.lastName}`.trim() 
     : 'User';
 
+  // Enhanced loading state with premium feel
   if (loading) {
     return (
-      <div className="min-h-screen bg-green-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#FFFDF6] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-green-600 font-medium">Loading dogs...</p>
+          <div className="relative w-24 h-24 mx-auto mb-6">
+            {/* Outer ring */}
+            <div className="absolute inset-0 border-4 border-blue-200 rounded-full animate-pulse"></div>
+            {/* Spinning ring */}
+            <div className="absolute inset-0 border-4 border-transparent border-t-blue-600 border-r-blue-600 rounded-full animate-spin"></div>
+            {/* Inner glow */}
+            <div className="absolute inset-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-20 animate-pulse"></div>
+            {/* Center icon */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-2xl animate-bounce">🐕</span>
+            </div>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Finding your perfect companion...</h3>
+          <p className="text-gray-600">This won't take long</p>
         </div>
       </div>
     );
@@ -274,7 +355,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
   return (
            <div className="min-h-screen bg-[#FFFDF6] custom-scrollbar" style={{ fontFamily: '"Inter", "Segoe UI", sans-serif' }}>
             {/* Header */}
-      
+
       {/* Add top margin back */}
       <div className="py-5"></div>
 
@@ -287,66 +368,66 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                  <div className="flex-1">
                    <h3 className="text-xxl font-extrabold text-gray-900 mb-6 uppercase tracking-wider" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 1000 }}>
                      Filter
-                   </h3>
+              </h3>
 
                    {/* Two Column Grid */}
                    <div className="grid grid-cols-2 gap-x-4 gap-y-4">
                      {/* Left Column */}
                      <div className="space-y-4">
-                       {/* Age Filter */}
+                {/* Age Filter */}
                        <div>
                          <Label className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-2 block" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800 }}>
-                           Age
-                         </Label>
-                         <div className="px-2">
-                           <Slider
-                             value={ageRange}
-                             onValueChange={setAgeRange}
-                             max={15}
-                             min={0}
-                             step={1}
+                    Age
+                  </Label>
+                  <div className="px-2">
+                    <Slider
+                      value={ageRange}
+                      onValueChange={setAgeRange}
+                      max={15}
+                      min={0}
+                      step={1}
                              className="mb-2 cursor-pointer"
-                           />
+                    />
                            <div className="flex justify-between text-xs text-gray-500 font-medium">
-                             <span>{ageRange[0]} years</span>
-                             <span>{ageRange[1]} years</span>
-                           </div>
-                         </div>
-                       </div>
+                      <span>{ageRange[0]} years</span>
+                      <span>{ageRange[1]} years</span>
+                    </div>
+                  </div>
+                </div>
 
-                       {/* Breed Filter */}
+                {/* Breed Filter */}
                        <div>
                          <Label className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-2 block" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800 }}>
-                           Breed
-                         </Label>
-                         <Select value={selectedBreed} onValueChange={setSelectedBreed}>
+                    Breed
+                  </Label>
+                  <Select value={selectedBreed} onValueChange={setSelectedBreed}>
                            <SelectTrigger className="bg-white border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-300 h-9 text-sm">
-                             <SelectValue placeholder="All breeds" />
-                           </SelectTrigger>
+                      <SelectValue placeholder="All breeds" />
+                    </SelectTrigger>
                            <SelectContent className="bg-white rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
-                             <SelectItem value="all">All breeds</SelectItem>
-                             {getUniqueBreeds().map(breed => (
-                               <SelectItem key={breed} value={breed}>{breed}</SelectItem>
-                             ))}
-                           </SelectContent>
-                         </Select>
-                       </div>
+                      <SelectItem value="all">All breeds</SelectItem>
+                      {getUniqueBreeds().map(breed => (
+                        <SelectItem key={breed} value={breed}>{breed}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                       {/* Gender Filter */}
+                {/* Gender Filter */}
                        <div>
                          <Label className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-2 block" style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800 }}>
-                           Gender
-                         </Label>
-                         <Select value={selectedGender} onValueChange={setSelectedGender}>
+                    Gender
+                  </Label>
+                  <Select value={selectedGender} onValueChange={setSelectedGender}>
                            <SelectTrigger className="bg-white border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-300 h-9 text-sm">
-                             <SelectValue placeholder="All genders" />
-                           </SelectTrigger>
+                      <SelectValue placeholder="All genders" />
+                    </SelectTrigger>
                            <SelectContent className="bg-white rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
-                             <SelectItem value="all">All genders</SelectItem>
-                             <SelectItem value="male">Male</SelectItem>
-                             <SelectItem value="female">Female</SelectItem>
-                           </SelectContent>
-                         </Select>
+                      <SelectItem value="all">All genders</SelectItem>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                    </SelectContent>
+                  </Select>
                        </div>
 
                        {/* Size Filter */}
@@ -434,16 +515,16 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                      >
                        🗑️ Clear All Filters
                      </Button>
-                   </div>
-                 </div>
-    
+                </div>
+            </div>
+
     {/* User Profile Card - Fixed at bottom */}
     <div className="mt-auto pt-6 border-t border-gray-500">
       <div className="flex items-center space-x-4 mb-4">
         <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-teal-500 rounded-full flex items-center justify-center shadow-md">
           <span className="text-white font-bold text-lg">{userInitials}</span>
-        </div>
-        <div>
+                  </div>
+                  <div>
           <div className="font-extrabold uppercase tracking-wider text-lg" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>{displayName}</div>
           <div className="text-sm text-gray-500 capitalize">{user ? user.role : 'Guest'}</div>
         </div>
@@ -471,118 +552,115 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
           Login
         </Button>
       )}
-    </div>
-  </div>
-</div>
+                  </div>
+                </div>
+          </div>
 
                      {/* Main Content - Dog Grid */}
            <div className="flex-1 mr-2">
              {/* Main Title and Search Bar */}
              <div className="mb-6">
-                               <div className="flex justify-between items-center mb-4">
+               <div className="flex justify-between items-center mb-4">
                                      <div className="flex-1">
                      {memoizedSplitText}
                    </div>
-                                   <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-4">
                     <div className="relative animate-fade-in-up" style={{ animationDelay: '0.6s', animationFillMode: 'both' }}>
-                      <Input
-                        type="text"
-                        placeholder="SEARCH"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                     <Input
+                       type="text"
+                       placeholder="SEARCH"
+                       value={searchQuery}
+                       onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-80 h-9.5 rounded-full border-2 border-black bg-white text-sm font-bold uppercase tracking-wide placeholder:text-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-300"
-                        style={{ fontFamily: 'Inter Black, sans-serif' }}
-                      />
-                    </div>
-                                     <Button 
-                    onClick={() => {
-                      if (user) {
-                        setShowRescueModal(true);
-                      } else {
+                       style={{ fontFamily: 'Inter Black, sans-serif' }}
+                     />
+                   </div>
+                   <Button 
+                     onClick={() => {
+                       if (user) {
+                         setShowRescueModal(true);
+                       } else {
                         // Allow guests to access the form but show warning
                         const proceed = confirm("⚠️ GUEST ACCESS WARNING\n\nYou're accessing the rescue reporting form as a guest. While you can view and fill out the form, you'll need to login to actually submit your report.\n\nWould you like to continue? (Recommended: Login first for full access)");
                         if (proceed) {
                           setShowRescueModal(true);
                         } else {
-                          setShowAuthModal(true);
+                         setShowAuthModal(true);
                         }
-                      }
-                    }}
+                       }
+                     }}
                     className="bg-red-500 hover:bg-red-600 text-white font-bold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-fade-in-up"
                     style={{ fontFamily: 'Inter Black, sans-serif', animationDelay: '0.8s', animationFillMode: 'both' }}
-                  >
+                   >
                     🚨 Report Dog for Rescue
-                  </Button>
+                   </Button>
                  </div>
                </div>
              </div>
 
-                           {filteredDogs.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-500 text-lg">No dogs found matching your criteria.</p>
-                </div>
-              ) : (
-                                 <div className="border border-black rounded-4xl p-8 animate-grid-entrance">
-                  <div className="grid grid-cols-3 gap-8 justify-items-center">
-                    {filteredDogs.map((dog, index) => (
-                                             <Card 
-                         key={dog.id} 
-                         className="w-90 border border-black shadow-[0_20px_25px_-5px_rgba(0,0,0,0.3)] cursor-pointer group bg-[#3DB2FF] animate-card-entrance"
-                         style={{ 
-                           animationDelay: `${index * 0.08}s`,
-                           animationFillMode: 'both'
-                         }}
-                         onAnimationEnd={(e: React.AnimationEvent<HTMLDivElement>) => {
-                           if (e.animationName === 'card-entrance') {
-                             e.currentTarget.classList.add('card-hover-effect');
-                           }
-                         }}
-                       >
-                      {/* Top section with name and details */}
-                      <CardContent className="text-[#F4F6FF]" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>
-                        <h3 className="text-[#FDFDFD] font-bold text-4xl tracking-wide mb-2 uppercase transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) animate-text-slide-in" style={{ fontFamily: 'KBStickToThePlan, sans-serif', animationDelay: '0.15s' }}>
-                          {dog.name}
-                        </h3>
-                        <div className="text-[#FDFDFD] font-medium text-sm space-y-1 uppercase mb-4 transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94)" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>
-                          <div className="transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) animate-text-slide-in" style={{ animationDelay: '0.2s' }}>AGE: {dog.age}</div>
-                          <div className="transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) animate-text-slide-in" style={{ animationDelay: '0.25s' }}>GENDER: {dog.gender.toUpperCase()}</div>
-                        </div>
-                        
-                        {/* Image section with breed badge and adopt button */}
-                        <div className="relative rounded-3xl overflow-hidden -mx-3 -mb-3 h-55">
-                          {/* <img
-                            src={dog.imageUrl || '/placeholder-dog.jpg'}
-                            alt={dog.name}
-                            className="w-full h-full object-cover object-center transition-all duration-300 ease-out group-hover:scale-105"
-                          /> */}
-                            <img
-                             src={dog.imageUrl || '/placeholder-dog.jpg'}
-                             alt={dog.name}
-                             className="w-full h-full object-cover object-center transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94)"
-                           />
-                          
-                          {/* Breed badge overlay */}
-                          <div className="absolute top-2 left-2 backdrop-blur-md bg-black/50 border border-white/50 text-white px-7 py-1 rounded-full text-sm font-medium transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) group-hover:scale-105 animate-badge-entrance" style={{ fontFamily: 'Instrument Sans, sans-serif', animationDelay: '0.3s' }}>
-                            {dog.breed}
-                          </div>
-                          
-                          {/* Adopt button overlay at bottom */}
-                          <div className="absolute bottom-2 left-2 right-2 animate-button-entrance" style={{ animationDelay: '0.35s' }}>
-                            <Button
-                              onClick={() => handleAdoptClick(dog)}
-                              className="w-full bg-white text-black font-bold text-sm py-4 rounded-full transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) shadow-lg hover:shadow-xl uppercase tracking-wide transform hover:bg-gradient-to-r hover:from-green-500 hover:to-green-600 hover:text-white hover:scale-95"
-                              style={{ fontFamily: 'Instrument Sans, sans-serif' }}
-                            >
-                              ADOPT ME
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                         {filteredDogs.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">No dogs found matching your criteria.</p>
               </div>
-            )}
+            ) : (
+                                <div className="border border-black rounded-4xl p-8 animate-grid-entrance">
+                                <div className="grid grid-cols-3 gap-8 justify-items-center">
+                   {filteredDogs.map((dog, index) => (
+                                            <Card 
+                        key={dog.id} 
+                        className="w-90 border border-black shadow-[0_20px_25px_-5px_rgba(0,0,0,0.3)] cursor-pointer group bg-[#3DB2FF] animate-card-entrance"
+                        style={{ 
+                          animationDelay: `${index * 0.08}s`,
+                          animationFillMode: 'both'
+                        }}
+                        onAnimationEnd={(e: React.AnimationEvent<HTMLDivElement>) => {
+                          if (e.animationName === 'card-entrance') {
+                            e.currentTarget.classList.add('card-hover-effect');
+                          }
+                        }}
+                      >
+                     {/* Top section with name and details */}
+                     <CardContent className="text-[#F4F6FF]" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>
+                       <h3 className="text-[#FDFDFD] font-bold text-4xl tracking-wide mb-2 uppercase transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) animate-text-slide-in" style={{ fontFamily: 'KBStickToThePlan, sans-serif', animationDelay: '0.15s' }}>
+                         {dog.name}
+                       </h3>
+                       <div className="text-[#FDFDFD] font-medium text-sm space-y-1 uppercase mb-4 transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94)" style={{ fontFamily: 'KBStickToThePlan, sans-serif' }}>
+                         <div className="transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) animate-text-slide-in" style={{ animationDelay: '0.2s' }}>AGE: {dog.age}</div>
+                         <div className="transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) animate-text-slide-in" style={{ animationDelay: '0.25s' }}>GENDER: {dog.gender.toUpperCase()}</div>
+                       </div>
+                       
+                       {/* Image section with breed badge and adopt button */}
+                       <div className="relative rounded-3xl overflow-hidden -mx-3 -mb-3 h-55">
+                         <img
+                           src={dog.imageUrl || '/placeholder-dog.jpg'}
+                           alt={dog.name}
+                            className="w-full h-full object-cover object-center transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+                            loading="lazy"
+                            decoding="async"
+                         />
+                         
+                         {/* Breed badge overlay */}
+                         <div className="absolute top-2 left-2 backdrop-blur-md bg-black/50 border border-white/50 text-white px-7 py-1 rounded-full text-sm font-medium transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) group-hover:scale-105 animate-badge-entrance" style={{ fontFamily: 'Instrument Sans, sans-serif', animationDelay: '0.3s' }}>
+                           {dog.breed}
+                         </div>
+                         
+                         {/* Adopt button overlay at bottom */}
+                         <div className="absolute bottom-2 left-2 right-2 animate-button-entrance" style={{ animationDelay: '0.35s' }}>
+                                                                                    <Button
+                             onClick={() => handleAdoptClick(dog)}
+                             className="w-full bg-white text-black font-bold text-sm py-4 rounded-full transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94) shadow-lg hover:shadow-xl uppercase tracking-wide transform hover:bg-gradient-to-r hover:from-green-500 hover:to-green-600 hover:text-white hover:scale-95"
+                             style={{ fontFamily: 'Instrument Sans, sans-serif' }}
+                           >
+                             ADOPT ME
+                           </Button>
+                         </div>
+                       </div>
+                     </CardContent>
+                   </Card>
+                 ))}
+               </div>
+             </div>
+           )}
           </div>
         </div>
       </div>
@@ -678,14 +756,14 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
         onAuthSuccess={onLogin || (() => {})}
       />
 
-             {/* Rescue Request Modal */}
-       <RescueRequestModal 
-         isOpen={showRescueModal} 
-         onClose={() => setShowRescueModal(false)} 
-         onSuccess={() => {
+      {/* Rescue Request Modal */}
+      <RescueRequestModal 
+        isOpen={showRescueModal} 
+        onClose={() => setShowRescueModal(false)} 
+        onSuccess={() => {
            alert("Rescue request submitted successfully! Rescuers in your area will be notified.");
-           setShowRescueModal(false);
-         }}
+          setShowRescueModal(false);
+        }} 
          user={user}
        />
 
@@ -843,6 +921,6 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
            </div>
          </div>
        </footer>
-     </div>
-   );
- }
+    </div>
+  );
+}

@@ -1,0 +1,250 @@
+/* --- Professional Expandable Bottom Navbar --- */
+
+.header {
+  position: fixed;
+  bottom: 2rem;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+}
+
+/* --- 1. The Main Container --- */
+.expandableNav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Reduced from 0.75rem */
+  padding: 0.4rem; /* Reduced from 0.5rem */
+  min-width: 80px; /* Reduced from 120px */
+  
+  /* Premium Glassmorphism Style - Updated Color */
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  border-radius: 60px;
+  
+  /* Smooth container transitions */
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* --- 2. Individual Link Styling --- */
+.expandableNav > a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border-radius: 30px;
+  
+  /* Base dimensions - Reduced */
+  width: 48px; /* Reduced from 56px */
+  height: 48px; /* Reduced from 56px */
+  padding: 0;
+  overflow: hidden;
+  
+  /* Professional easing and timing */
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center;
+  will-change: width, background-color, transform;
+}
+
+/* --- 3. Hover States with Smooth Expansion --- */
+.navIconLink:hover {
+  width: 130px; /* Reduced from 160px */
+  padding: 0 0.8rem; /* Reduced from 1rem */
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  justify-content: flex-start;
+}
+
+/* --- 4. Icon Styling --- */
+.expandableNav i {
+  font-size: 1.3rem; /* Reduced from 1.5rem */
+  color: var(--secondary-color, #94a3b8);
+  min-width: 20px; /* Reduced from 24px */
+  flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center;
+}
+
+.navIconLink:hover i {
+  color: var(--primary-color, #ffffff);
+  transform: scale(1.1);
+}
+
+/* --- 5. Text Labels with Staggered Animation --- */
+.linkText {
+  font-size: 0.85rem; /* Reduced from 0.9rem */
+  font-weight: 600;
+  color: var(--primary-color, #ffffff);
+  letter-spacing: 0.025em;
+  
+  /* Start completely hidden */
+  opacity: 0;
+  width: 0;
+  margin-left: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  
+  /* Staggered reveal animation */
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition-delay: 0.1s;
+  transform: translateX(-10px);
+}
+
+/* --- 6. Text Reveal on Hover --- */
+.navIconLink:hover .linkText {
+  opacity: 1;
+  width: auto;
+  margin-left: 0.6rem; /* Reduced from 0.75rem */
+  transform: translateX(0);
+}
+
+/* --- 7. Premium CTA Button --- */
+.navCta {
+  background: linear-gradient(135deg, 
+    var(--accent-color, #3b82f6) 0%, 
+    var(--accent-color, #2563eb) 100%);
+  color: #ffffff !important;
+  width: auto !important;
+  min-width: 160px; /* Reduced from 200px */
+  padding: 0 1.2rem !important; /* Reduced from 1.5rem */
+  font-weight: 600;
+  box-shadow: 
+    0 4px 16px rgba(59, 130, 246, 0.3),
+    0 2px 8px rgba(59, 130, 246, 0.2);
+  justify-content: center !important;
+  gap: 0.4rem; /* Reduced from 0.5rem */
+  margin-left: 0.3rem; /* Reduced from 0.5rem */
+}
+
+.navCta:hover {
+  background: linear-gradient(135deg, 
+    var(--accent-color, #2563eb) 0%, 
+    var(--accent-color, #1d4ed8) 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 6px 24px rgba(59, 130, 246, 0.4),
+    0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* CTA text always visible */
+.navCta .linkText {
+  opacity: 1 !important;
+  width: auto !important;
+  margin-left: 0.4rem !important; /* Reduced from 0.5rem */
+  transform: translateX(0) !important;
+  transition-delay: 0s !important;
+}
+
+.navCta i {
+  color: #ffffff !important;
+}
+
+/* --- 8. Enhanced Focus States --- */
+.expandableNav > a:focus {
+  outline: 2px solid var(--accent-color, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* --- 9. Performance Optimizations --- */
+.expandableNav {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.expandableNav > a {
+  backface-visibility: hidden;
+}
+
+/* --- 10. Responsive Design --- */
+@media (max-width: 768px) {
+  .header {
+    bottom: 1rem;
+  }
+  
+  .expandableNav {
+    min-width: 280px; /* Reduced from 400px */
+    gap: 0.1rem; /* Reduced from 0.15rem */
+    padding: 0.3rem; /* Reduced from 0.4rem */
+  }
+  
+  .expandableNav > a {
+    width: 42px; /* Reduced from 48px */
+    height: 42px; /* Reduced from 48px */
+  }
+  
+  .navIconLink:hover {
+    width: 100px; /* Reduced from 120px */
+    padding: 0 0.6rem; /* Reduced from 0.75rem */
+  }
+  
+  .expandableNav i {
+    font-size: 1.1rem; /* Reduced from 1.3rem */
+  }
+  
+  .linkText {
+    font-size: 0.75rem; /* Reduced from 0.8rem */
+  }
+  
+  .navCta {
+    min-width: 130px; /* Reduced from 160px */
+    padding: 0 1rem !important; /* Reduced from 1.2rem */
+  }
+}
+
+@media (max-width: 480px) {
+  .expandableNav {
+    min-width: 250px; /* Reduced from 360px */
+  }
+  
+  .navIconLink:hover {
+    width: 85px; /* Reduced from 100px */
+  }
+  
+  .navCta {
+    min-width: 110px; /* Reduced from 140px */
+    padding: 0 0.8rem !important; /* Reduced from 1rem */
+  }
+  
+  .navCta .linkText {
+    font-size: 0.7rem; /* Reduced from 0.75rem */
+  }
+}
+
+/* --- 11. Accessibility Enhancements --- */
+@media (prefers-reduced-motion: reduce) {
+  .expandableNav,
+  .expandableNav > a,
+  .linkText,
+  .expandableNav i {
+    transition: none !important;
+  }
+}
+
+/* --- 12. Dark Mode Support --- */
+@media (prefers-color-scheme: dark) {
+  .expandableNav {
+    background: rgba(15, 15, 20, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .navIconLink:hover {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0.05) 100%);
+  }
+}

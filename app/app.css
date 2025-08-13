@@ -2,6 +2,38 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Performance critical CSS */
+* {
+  box-sizing: border-box;
+}
+
+/* Optimize fonts */
+body {
+  font-display: swap;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Route transition optimizations */
+.route-transition-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.route-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms ease-out, transform 300ms ease-out;
+}
+
+/* GPU acceleration for animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
 /* Custom animations for enhanced user experience */
 @keyframes fade-in-up {
   from {
