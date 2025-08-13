@@ -2,6 +2,228 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Custom animations for enhanced user experience */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+/* Performance optimizations */
+.animate-card-entrance,
+.animate-text-slide-in,
+.animate-badge-entrance,
+.animate-button-entrance,
+.animate-grid-entrance {
+  backface-visibility: hidden;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+/* Prevent animation conflicts */
+.animate-card-entrance {
+  animation-fill-mode: forwards !important;
+}
+
+.animate-text-slide-in {
+  animation-fill-mode: forwards !important;
+}
+
+.animate-badge-entrance {
+  animation-fill-mode: forwards !important;
+}
+
+.animate-button-entrance {
+  animation-fill-mode: forwards !important;
+}
+
+.animate-grid-entrance {
+  animation-fill-mode: forwards !important;
+}
+
+/* Dog card entrance animations - Optimized for performance */
+@keyframes card-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-card-entrance {
+  animation: card-entrance 0.8s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+/* Premium hover effects for dog cards - Enhanced smoothness */
+.card-hover-effect {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center bottom;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-12px) scale(1.03) rotateX(2deg);
+  box-shadow: 
+    0 32px 64px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  filter: brightness(1.01) contrast(1.01);
+}
+
+/* Enhanced image hover effect - Minimal and subtle */
+.card-hover-effect:hover img {
+  transform: scale(1.05);
+  filter: brightness(1.02) saturate(1.02);
+}
+
+/* Smooth text hover effects */
+.card-hover-effect:hover h3 {
+  transform: translateY(-2px);
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card-hover-effect:hover .group-hover\:translate-x-1 {
+  transform: translateX(4px);
+}
+
+/* Premium button hover enhancement */
+.card-hover-effect:hover button {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Enhanced badge hover effect */
+.card-hover-effect:hover .backdrop-blur-md {
+  transform: scale(1.1) translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Smooth card content transitions */
+.card-hover-effect * {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Premium glow effect on hover */
+.card-hover-effect:hover {
+  position: relative;
+}
+
+.card-hover-effect:hover::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* Ensure entrance animations don't interfere with hover */
+.animate-card-entrance {
+  animation: card-entrance 0.8s ease-out forwards;
+  will-change: transform, opacity;
+  animation-fill-mode: forwards;
+}
+
+/* Text slide-in animation for card content - Optimized */
+@keyframes text-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-text-slide-in {
+  animation: text-slide-in 0.6s ease-out forwards;
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+/* Ensure text animations don't interfere with hover */
+.animate-text-slide-in.animation-complete {
+  animation: none;
+}
+
+/* Badge entrance animation - Optimized */
+@keyframes badge-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-badge-entrance {
+  animation: badge-entrance 0.4s ease-out forwards;
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+/* Button entrance animation - Optimized */
+@keyframes button-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-button-entrance {
+  animation: button-entrance 0.4s ease-out forwards;
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+/* Grid container entrance animation - Optimized */
+@keyframes grid-entrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-grid-entrance {
+  animation: grid-entrance 0.5s ease-out forwards;
+  animation-delay: 0.1s;
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
 @font-face{
     font-family: "KBStickToThePlan";
     src: url("../Web Fonts/ef4a6d6d3f3fddb14ee64704904e9890.eot");
@@ -199,35 +421,7 @@ html::-webkit-scrollbar-corner {
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
-  /* Custom Scrollbar Styles */
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(34, 197, 94, 0.6) rgba(0, 0, 0, 0.1);
-  }
-
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(34, 197, 94, 0.8), rgba(16, 185, 129, 0.8));
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, rgba(34, 197, 94, 1), rgba(16, 185, 129, 1));
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-corner {
-    background: rgba(0, 0, 0, 0.05);
-  }
+  /* Custom Scrollbar Styles - REMOVED GREEN SCROLLBAR */
 
   /* Orange theme scrollbar for rescuer pages */
   .custom-scrollbar-orange {
@@ -258,4 +452,207 @@ html::-webkit-scrollbar-corner {
   .custom-scrollbar-orange::-webkit-scrollbar-corner {
     background: rgba(0, 0, 0, 0.05);
   }
+
+  /* Enhanced Filter Sidebar Styling */
+  .filter-sidebar {
+    box-shadow: 
+      0 20px 40px -12px rgba(0, 0, 0, 0.25),
+      0 8px 16px -4px rgba(0, 0, 0, 0.15),
+      0 4px 8px -2px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(0, 0, 0, 0.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .filter-sidebar:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 25px 50px -12px rgba(0, 0, 0, 0.3),
+      0 12px 24px -4px rgba(0, 0, 0, 0.2),
+      0 6px 12px -2px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* Enhanced filter sections */
+  .filter-section {
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+  }
+
+  .filter-section:hover {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Enhanced slider styling */
+  .filter-sidebar [data-radix-slider-track] {
+    background: linear-gradient(90deg, #10b981, #059669);
+    height: 8px;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .filter-sidebar [data-radix-slider-range] {
+    background: linear-gradient(90deg, #059669, #047857);
+    height: 8px;
+    border-radius: 4px;
+  }
+
+  .filter-sidebar [data-radix-slider-thumb] {
+    background: white;
+    border: 3px solid #059669;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .filter-sidebar [data-radix-slider-thumb]:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.4);
+  }
+
+  /* Enhanced select styling */
+  .filter-sidebar .select-trigger {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .filter-sidebar .select-trigger:hover {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Custom scrollbar for filter section - Minimal */
+.custom-scrollbar-filter {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.custom-scrollbar-filter::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Custom scrollbar for main page - Minimal */
+.custom-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Hide scrollbars for SelectContent components */
+.SelectContent {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.SelectContent::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Hide scrollbars for ALL forms, modals, and dialog content */
+.DialogContent,
+[class*="DialogContent"],
+[class*="dialog-content"],
+[class*="modal-content"],
+[class*="form-content"],
+main,
+[class*="overflow-y-auto"] {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+
+.DialogContent::-webkit-scrollbar,
+[class*="DialogContent"]::-webkit-scrollbar,
+[class*="dialog-content"]::-webkit-scrollbar,
+[class*="modal-content"]::-webkit-scrollbar,
+[class*="form-content"]::-webkit-scrollbar,
+main::-webkit-scrollbar,
+[class*="overflow-y-auto"]::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+}
+
+/* Hide scrollbars for specific components */
+.RescuerDashboard [class*="overflow-y-auto"],
+.AdminDashboardNew [class*="overflow-y-auto"],
+.RescueRequestModal [class*="overflow-y-auto"] {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.RescuerDashboard [class*="overflow-y-auto"]::-webkit-scrollbar,
+.AdminDashboardNew [class*="overflow-y-auto"]::-webkit-scrollbar,
+.RescueRequestModal [class*="overflow-y-auto"]::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Hide scrollbars for UI components used in forms */
+[data-radix-select-content],
+[data-radix-dropdown-menu-content],
+[role="listbox"],
+[role="menu"],
+[role="dialog"] {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+[data-radix-select-content]::-webkit-scrollbar,
+[data-radix-dropdown-menu-content]::-webkit-scrollbar,
+[role="listbox"]::-webkit-scrollbar,
+[role="menu"]::-webkit-scrollbar,
+[role="dialog"]::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Hide scrollbars for form elements */
+textarea,
+input,
+[class*="textarea"],
+[class*="input"],
+[class*="form-field"] {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+textarea::-webkit-scrollbar,
+input::-webkit-scrollbar,
+[class*="textarea"]::-webkit-scrollbar,
+[class*="input"]::-webkit-scrollbar,
+[class*="form-field"]::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Final comprehensive rule - Hide ALL scrollbars globally */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Filter section styling */
+.filter-section {
+  @apply mb-6;
+}
+
+.filter-label {
+  @apply text-sm font-bold text-gray-800 uppercase tracking-wider mb-3 block;
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
 }
