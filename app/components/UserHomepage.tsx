@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Slider } from "../components/ui/slider";
-import LoginForm from "./LoginForm";
+import LoginForm from "./AuthModal";
 import RescueRequestModal from "./RescueRequestModal";
 import SplitText from "./SplitText";
 import DogAdoptionNavigation from "./DogAdoptionNavigation";
+import AuthModal from "./AuthModal";
 
 // Cache for API responses
 const dogCache = new Map<string, { data: Dog[], timestamp: number }>();
@@ -632,7 +633,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                        {/* Image section with breed badge and adopt button */}
                        <div className="relative rounded-3xl overflow-hidden -mx-3 -mb-3 h-55">
                          <img
-                           src={dog.imageUrl || '/placeholder-dog.jpg'}
+                           src={dog.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTkiIGR5PSIuM2VtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5CV8J+QlTwvdGV4dD48L3N2Zz4='}
                            alt={dog.name}
                             className="w-full h-full object-cover object-center transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94)"
                             loading="lazy"
@@ -751,7 +752,8 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
 
       {/* Login Form for guests */}
       {showLoginForm && (
-        <LoginForm
+        <AuthModal
+          isOpen={showLoginForm}
           onClose={() => setShowLoginForm(false)}
           onAuthSuccess={onLogin || (() => {})}
         />

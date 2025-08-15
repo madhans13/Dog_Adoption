@@ -68,7 +68,7 @@ export default function LandingPage({ onGetStarted, onLearnMore }: LandingPagePr
            age: dog.age ? `${dog.age} years` : 'Unknown age',
            location: dog.location || 'Unknown location',
            traits: dog.traits || dog.personality || ['Friendly', 'Loving'],
-           image: dog.imageUrl || '/placeholder-dog.jpg', // Use exact same image source as UserHomepage
+           image: dog.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTkiIGR5PSIuM2VtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5CV8J+QlTwvdGV4dD48L3N2Zz4=', // Use exact same image source as UserHomepage
            status: dog.status || 'available'
          })) || [];
          
@@ -88,7 +88,7 @@ export default function LandingPage({ onGetStarted, onLearnMore }: LandingPagePr
              age: "2 years",
              location: "San Francisco, CA",
              traits: ["Friendly", "Active", "Good with kids"],
-             image: "/placeholder-dog.jpg",
+             image: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTkiIGR5PSIuM2VtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wf5CV8J+QlTwvdGV4dD48L3N2Zz4=",
              status: "available"
            },
            {
@@ -98,7 +98,7 @@ export default function LandingPage({ onGetStarted, onLearnMore }: LandingPagePr
              age: "3 years", 
              location: "Austin, TX",
              traits: ["Loyal", "Smart", "Protective"],
-             image: "/placeholder-dog.jpg",
+             image: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTkiIGR5PSIuM2VtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wf5CV8J+QlTwvdGV4dD48L3N2Zz4=",
              status: "available"
            },
            {
@@ -108,7 +108,7 @@ export default function LandingPage({ onGetStarted, onLearnMore }: LandingPagePr
              age: "1 year",
              location: "Denver, CO",
              traits: ["Playful", "Gentle", "Loves water"],
-             image: "/placeholder-dog.jpg",
+             image: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTkiIGR5PSIuM2VtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wf5CV8J+QlTwvdGV4dD48L3N2Zz4=",
              status: "available"
            }
          ]);
@@ -515,7 +515,7 @@ export default function LandingPage({ onGetStarted, onLearnMore }: LandingPagePr
                        className="w-full h-full object-cover"
                        onError={(e) => {
                          const target = e.target as HTMLImageElement;
-                         target.src = '/placeholder-dog.jpg';
+                         target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTkiIGR5PSIuM2VtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5CV8J+QlTwvdGV4dD48L3N2Zz4=';
                        }}
                      />
                    </div>
