@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Slider } from "../components/ui/slider";
-import AuthModal from "./AuthModal";
+import LoginForm from "./AuthModal";
 import RescueRequestModal from "./RescueRequestModal";
 import SplitText from "./SplitText";
 import DogAdoptionNavigation from "./DogAdoptionNavigation";
+import AuthModal from "./AuthModal";
 
 // Cache for API responses
 const dogCache = new Map<string, { data: Dog[], timestamp: number }>();
@@ -49,7 +50,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDog, setSelectedDog] = useState<Dog | null>(null);
   const [showAdoptModal, setShowAdoptModal] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showLoginForm, setShowLoginForm] = useState(false);
   const [showRescueModal, setShowRescueModal] = useState(false);
 
   // Filter states
@@ -543,7 +544,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
         </Button>
       ) : (
         <Button 
-          onClick={() => setShowAuthModal(true)}
+          onClick={() => setShowLoginForm(true)}
           variant="outline" 
           size="sm"
           className="w-full border-2 border-gray-300 text-gray-800 rounded-full px-6 py-2 hover:bg-gray-800 hover:text-white transition-all duration-300 font-medium"
@@ -585,7 +586,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                         if (proceed) {
                           setShowRescueModal(true);
                         } else {
-                         setShowAuthModal(true);
+                         setShowLoginForm(true);
                         }
                        }
                      }}
@@ -632,7 +633,7 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
                        {/* Image section with breed badge and adopt button */}
                        <div className="relative rounded-3xl overflow-hidden -mx-3 -mb-3 h-55">
                          <img
-                           src={dog.imageUrl || '/placeholder-dog.jpg'}
+                           src={dog.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTkiIGR5PSIuM2VtIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5CV8J+QlTwvdGV4dD48L3N2Zz4='}
                            alt={dog.name}
                             className="w-full h-full object-cover object-center transition-all duration-500 cubic-bezier(0.25, 0.46, 0.45, 0.94)"
                             loading="lazy"
@@ -749,12 +750,14 @@ export default function UserHomepage({ user, onLogout, onLogin }: UserHomepagePr
         </DialogContent>
       </Dialog>
 
-      {/* Auth Modal for guests */}
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onAuthSuccess={onLogin || (() => {})}
-      />
+      {/* Login Form for guests */}
+      {showLoginForm && (
+        <AuthModal
+          isOpen={showLoginForm}
+          onClose={() => setShowLoginForm(false)}
+          onAuthSuccess={onLogin || (() => {})}
+        />
+      )}
 
       {/* Rescue Request Modal */}
       <RescueRequestModal 
