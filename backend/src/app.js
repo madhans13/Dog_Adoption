@@ -10,6 +10,7 @@ import dogRoutes from './routes/dogRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import adoptionRoutes from './routes/adoptionRoutes.js';
 import rescueRoutes from './routes/rescueRoutes.js';
+import rescuedDogRoutes from './routes/rescuedDogRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 
 const app = express();
@@ -56,6 +57,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api', dogRoutes);
 app.use('/api/adoptions', adoptionRoutes);
 app.use('/api/rescue', rescueRoutes);
+app.use('/api/rescued-dogs', rescuedDogRoutes);
 app.use('/api/admin', adminRoutes);
 
 // 404 handler

@@ -1,8 +1,8 @@
 import type { Route } from "./+types/adoption";
 import { useState, useEffect } from "react";
 import UserHomepage from "../components/UserHomepage";
-import RescuerDashboard from "../components/RescuerDashboard";
-import AdminDashboardNew from "../components/AdminDashboardNew";
+import RescuerDashboard from "../components/dashboard/rescuer/RescuerDashboard";
+import AdminDashboard from "../components/dashboard/admin/AdminDashboard";
 
 // Preload critical resources
 if (typeof window !== 'undefined') {
@@ -71,7 +71,7 @@ export default function Adoption() {
   if (user && (user.role === 'admin' || user.role === 'Admin' || user.role === 1)) {
     console.log('Routing to Admin Dashboard from adoption route');
     return (
-      <AdminDashboardNew
+      <AdminDashboard
         isOpen={true}
         onClose={() => {
           // Admin logout instead of just closing dashboard

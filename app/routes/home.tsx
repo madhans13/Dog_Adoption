@@ -2,8 +2,8 @@ import type { Route } from "./+types/home";
 import { useState, useEffect } from "react";
 import AuthModal from "../components/AuthModal";
 import RescueRequestModal from "../components/RescueRequestModal";
-import RescuerDashboard from "../components/RescuerDashboard";
-import AdminDashboardNew from "../components/AdminDashboardNew";
+import RescuerDashboard from "../components/dashboard/rescuer/RescuerDashboard";
+import AdminDashboard from "../components/dashboard/admin/AdminDashboard";
 import UserHomepage from "../components/UserHomepage";
 
 // Shadcn UI Components
@@ -195,7 +195,7 @@ export default function Home() {
   // If user is admin, show dashboard directly as the main page
   if (user && user.role === 'admin') {
     return (
-      <AdminDashboardNew
+      <AdminDashboard
         isOpen={true}
         onClose={() => {
           // Admin logout instead of just closing dashboard
@@ -640,7 +640,7 @@ export default function Home() {
         {/* Rescuer Dashboard */}
 
 
-        <AdminDashboardNew
+        <AdminDashboard
           isOpen={showAdminDashboard}
           onClose={() => setShowAdminDashboard(false)}
           userToken={token}
