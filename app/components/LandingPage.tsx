@@ -625,9 +625,9 @@ export default function LandingPage({ onGetStarted, onLearnMore }: LandingPagePr
               <Heart className="ml-2 h-5 w-5" />
             </Button>
           </motion.div>
-                 </div>
-       </section>
-
+        </div>
+      </section>
+    
        {/* Footer Section */}
        <footer className="bg-gray-900 text-white">
          <div className="max-w-6xl mx-auto px-8 py-16">
@@ -728,6 +728,6 @@ export default function LandingPage({ onGetStarted, onLearnMore }: LandingPagePr
            </div>
          </div>
        </footer>
-     </div>
-   );
- }
+    </div>
+  );
+}

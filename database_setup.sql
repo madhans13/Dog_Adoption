@@ -108,7 +108,29 @@ CREATE TABLE IF NOT EXISTS "RescueRequest" (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 7. USER SESSIONS TABLE (for JWT token management)
+-- 7. RESCUED DOGS TABLE (for dogs that have been rescued)
+CREATE TABLE IF NOT EXISTS "RescuedDog" (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    breed VARCHAR(100) NOT NULL,
+    age VARCHAR(50),
+    gender VARCHAR(10) CHECK (gender IN ('Male', 'Female')),
+    size VARCHAR(20) CHECK (size IN ('Small', 'Medium', 'Large', 'Extra Large')),
+    color VARCHAR(100),
+    health_status TEXT,
+    description TEXT,
+    rescue_notes TEXT,
+    image_url VARCHAR(500),
+    rescue_date TIMESTAMP NOT NULL,
+    rescuer_id INTEGER REFERENCES "User"(id) NOT NULL,
+    status VARCHAR(30) DEFAULT 'rescued' CHECK (status IN ('rescued', 'adopted', 'available_for_adoption')),
+    rescue_request_id INTEGER REFERENCES "RescueRequest"(id),
+    location VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. USER SESSIONS TABLE (for JWT token management)
 CREATE TABLE IF NOT EXISTS "UserSession" (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES "User"(id) ON DELETE CASCADE,
@@ -127,6 +149,9 @@ CREATE INDEX IF NOT EXISTS idx_dog_rescuer ON "Dog"(rescuer_id);
 CREATE INDEX IF NOT EXISTS idx_adoption_status ON "AdoptionRequest"(status);
 CREATE INDEX IF NOT EXISTS idx_rescue_status ON "RescueRequest"(status);
 CREATE INDEX IF NOT EXISTS idx_rescue_location ON "RescueRequest"(location);
+CREATE INDEX IF NOT EXISTS idx_rescued_dog_status ON "RescuedDog"(status);
+CREATE INDEX IF NOT EXISTS idx_rescued_dog_rescuer ON "RescuedDog"(rescuer_id);
+CREATE INDEX IF NOT EXISTS idx_rescued_dog_rescue_request ON "RescuedDog"(rescue_request_id);
 
 -- Create triggers for updated_at timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -143,6 +168,7 @@ CREATE TRIGGER update_admin_updated_at BEFORE UPDATE ON "Admin" FOR EACH ROW EXE
 CREATE TRIGGER update_dog_updated_at BEFORE UPDATE ON "Dog" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_adoption_updated_at BEFORE UPDATE ON "AdoptionRequest" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_rescue_updated_at BEFORE UPDATE ON "RescueRequest" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_rescued_dog_updated_at BEFORE UPDATE ON "RescuedDog" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert sample admin user (password: admin123)
 -- Password hash for 'admin123' using bcrypt
@@ -159,4 +185,4 @@ WHERE email = 'admin@dogadoption.com' AND NOT EXISTS (
 );
 
 -- Success message
-SELECT 'Database schema created successfully! Tables: User, Rescuer, Admin, Dog, AdoptionRequest, RescueRequest, UserSession' as status;
+SELECT 'Database schema created successfully! Tables: User, Rescuer, Admin, Dog, AdoptionRequest, RescueRequest, RescuedDog, UserSession' as status;
