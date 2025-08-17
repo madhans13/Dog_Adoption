@@ -122,7 +122,7 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
     user: {
       name: user ? `${user.firstName} ${user.lastName}` : "Rescuer",
       email: user?.email || "rescuer@dogadoption.com",
-      avatar: "/avatars/rescuer.jpg",
+      avatar: "", // Remove the non-existent avatar path
     },
     teams: [
       {
@@ -212,6 +212,13 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
       fetchRescuedDogs()
     }
   }, [isOpen])
+
+  // Refresh rescued dogs when accessing completed rescues section
+  useEffect(() => {
+    if (isOpen && activeSection === 'completed rescues') {
+      fetchRescuedDogs()
+    }
+  }, [isOpen, activeSection])
 
   useEffect(() => {
     // Ensure rescueRequests is always an array before filtering
@@ -466,9 +473,15 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
     try {
       console.log('Opening rescue completion form for request:', requestId, 'by user:', user?.id)
       
-      // Don't change status yet - just show the completion form
-      // The status will only change to 'completed' after the user submits the form
-      setShowRescueCompletionForm(true)
+      // Find the selected request and set it
+      const request = rescueRequests.find(req => req.id === requestId)
+      if (request) {
+        setSelectedRequest(request)
+        setShowRescueCompletionForm(true)
+      } else {
+        console.error('Request not found:', requestId)
+        alert('Request not found. Please try again.')
+      }
       
     } catch (error) {
       console.error('Error opening rescue completion form:', error)
@@ -481,6 +494,11 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
     
     console.log('Rescue completion form submitted:', rescueCompletionForm)
     console.log('Selected request:', selectedRequest)
+    
+    if (!selectedRequest) {
+      alert('No rescue request selected. Please try again.')
+      return
+    }
     
     if (!rescueCompletionForm.dogName || !rescueCompletionForm.breed || !rescueCompletionForm.imageFile) {
       alert('Please fill in all required fields (Dog Name, Breed, and Dog Photo)')
@@ -506,6 +524,12 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
       formData.append('rescueNotes', rescueCompletionForm.rescueNotes)
       formData.append('rescueRequestId', selectedRequest?.id?.toString() || '')
       formData.append('status', 'rescued')
+      
+      // Debug: Log the FormData contents
+      console.log('FormData contents:')
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value)
+      }
 
       // Add the rescued dog to the rescued dogs table
       const response = await fetch('http://localhost:5000/api/rescued-dogs', {
@@ -617,14 +641,28 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
         const result = await response.json()
         console.log('Dog moved to adoption table successfully:', result)
         
-        // Update the rescued dog status to 'available_for_adoption'
-        setRescuedDogs(prev => prev.map(dog => 
-          dog.id === rescuedDog.id 
-            ? { ...dog, status: 'available_for_adoption' as const }
-            : dog
-        ))
+        // Update the rescued dog status to 'available_for_adoption' in the RescuedDog table
+        const updateResponse = await fetch(`http://localhost:5000/api/rescued-dogs/${rescuedDog.id}/status`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'available_for_adoption' })
+        })
         
-        alert('Dog successfully moved to adoption table!')
+        if (updateResponse.ok) {
+          // Update the local state
+          setRescuedDogs(prev => prev.map(dog => 
+            dog.id === rescuedDog.id 
+              ? { ...dog, status: 'available_for_adoption' as const }
+              : dog
+          ))
+          
+          alert('Dog successfully moved to adoption table!')
+        } else {
+          alert('Dog moved to adoption but status update failed.')
+        }
       } else {
         const errorData = await response.json()
         alert(`Error moving dog to adoption: ${errorData.error || 'Unknown error'}`)
@@ -768,7 +806,16 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
           <div className="flex flex-1 flex-col gap-4 p-4 pt-0 overflow-hidden">
             {/* Navigation Tabs */}
             <div className="flex space-x-1 bg-muted p-1 rounded-lg overflow-x-auto">
-              {['active requests', 'my assignments', 'completed rescues', 'add new dog', 'my rescued dogs', 'available dogs', 'monthly report', 'success stories'].map((section) => (
+              {[
+                'active requests', 
+                'my assignments', 
+                'completed rescues', 
+                'my rescued dogs',
+                'add new dog', 
+                'available dogs', 
+                'monthly report', 
+                'success stories'
+              ].map((section) => (
                 <button
                   key={section}
                   onClick={() => setActiveSection(section)}
@@ -1306,8 +1353,158 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
               </div>
             )}
 
+            {/* Completed Rescues Section */}
+            {activeSection === 'completed rescues' && (
+              <div className="space-y-4">
+                <DashboardCard variant="content">
+                  <DashboardCardHeader>
+                    <DashboardCardTitle>Completed Rescues</DashboardCardTitle>
+                    <DashboardCardDescription>
+                      View all completed rescue operations from all rescuers in the system.
+                    </DashboardCardDescription>
+                  </DashboardCardHeader>
+                  <DashboardCardContent>
+                    <div className="max-h-96 overflow-y-auto">
+                      {rescuedDogs.length > 0 ? (
+                        <div className="space-y-4">
+                          {/* Stats Summary */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div className="p-4 bg-blue-50 rounded-lg text-center">
+                              <h4 className="font-semibold text-blue-900">Total Rescued</h4>
+                              <p className="text-2xl font-bold text-blue-700">{rescuedDogs.length}</p>
+                            </div>
+                            <div className="p-4 bg-green-50 rounded-lg text-center">
+                              <h4 className="font-semibold text-green-900">Ready for Adoption</h4>
+                              <p className="text-2xl font-bold text-green-700">
+                                {rescuedDogs.filter(dog => dog.status === 'available_for_adoption').length}
+                              </p>
+                            </div>
+                            <div className="p-4 bg-purple-50 rounded-lg text-center">
+                              <h4 className="font-semibold text-purple-900">Recently Rescued</h4>
+                              <p className="text-2xl font-bold text-purple-700">
+                                {rescuedDogs.filter(dog => {
+                                  const rescueDate = new Date(dog.rescueDate);
+                                  const weekAgo = new Date();
+                                  weekAgo.setDate(weekAgo.getDate() - 7);
+                                  return rescueDate > weekAgo;
+                                }).length}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Rescued Dogs List */}
+                          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {rescuedDogs.map((dog) => (
+                              <DashboardCard key={dog.id} variant="content" className="relative">
+                                <DashboardCardHeader>
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <DashboardCardTitle className="text-base">{dog.name}</DashboardCardTitle>
+                                      <DashboardCardDescription>{dog.breed}</DashboardCardDescription>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                      <DashboardBadge 
+                                        variant={dog.status === 'rescued' ? 'default' : 
+                                                dog.status === 'available_for_adoption' ? 'secondary' : 'outline'}
+                                        className="text-xs"
+                                      >
+                                        {dog.status.replace('_', ' ')}
+                                      </DashboardBadge>
+                                      {dog.rescuerId === user?.id && (
+                                        <DashboardBadge variant="outline" className="text-xs">
+                                          Your Rescue
+                                        </DashboardBadge>
+                                      )}
+                                    </div>
+                                  </div>
+                                </DashboardCardHeader>
+                                <DashboardCardContent>
+                                  <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Age:</span>
+                                      <span>{dog.age || 'Unknown'} {dog.age ? 'years' : ''}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Gender:</span>
+                                      <span>{dog.gender || 'Unknown'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Size:</span>
+                                      <span>{dog.size || 'Unknown'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Health:</span>
+                                      <span>{dog.healthStatus || 'Unknown'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Rescued:</span>
+                                      <span>{dog.rescueDate ? new Date(dog.rescueDate).toLocaleDateString() : 'Unknown'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Location:</span>
+                                      <span>{dog.location || 'Unknown'}</span>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="mt-4 space-y-2">
+                                    <p className="text-sm text-muted-foreground line-clamp-2">
+                                      {dog.description || 'No description available'}
+                                    </p>
+                                    {dog.rescueNotes && (
+                                                                              <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                                        <strong>Rescue Notes:</strong> {dog.rescueNotes}
+                                      </p>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Only show actions for dogs rescued by current user */}
+                                  {dog.rescuerId === user?.id && (
+                                    <div className="mt-4 flex gap-2">
+                                      {dog.status === 'rescued' && (
+                                        <DashboardButton
+                                          size="sm"
+                                          onClick={() => moveToAdoption(dog)}
+                                          className="flex-1"
+                                        >
+                                          Move to Adoption
+                                        </DashboardButton>
+                                      )}
+                                      {dog.status === 'available_for_adoption' && (
+                                        <DashboardBadge variant="secondary" className="w-full text-center">
+                                          Ready for Adoption
+                                        </DashboardBadge>
+                                      )}
+                                      {dog.status === 'adopted' && (
+                                        <DashboardBadge variant="outline" className="w-full text-center">
+                                          Successfully Adopted
+                                        </DashboardBadge>
+                                      )}
+                                    </div>
+                                  )}
+                                </DashboardCardContent>
+                              </DashboardCard>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-12">
+                          <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="text-lg font-semibold mb-2">No completed rescues yet</h3>
+                          <p className="text-muted-foreground">
+                            No rescue operations have been completed in the system yet.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </DashboardCardContent>
+                </DashboardCard>
+              </div>
+            )}
+
+            
+
             {/* Default content for other sections */}
-            {!['active requests', 'add new dog', 'monthly report', 'my rescued dogs'].includes(activeSection) && (
+            {!['active requests', 'add new dog', 'monthly report', 'completed rescues', 'my rescued dogs'].includes(activeSection) && (
               <DashboardCard variant="content">
                 <DashboardCardHeader>
                   <DashboardCardTitle>{activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}</DashboardCardTitle>

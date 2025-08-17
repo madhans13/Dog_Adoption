@@ -151,7 +151,15 @@ app.post('/api/dogs', authenticateToken, upload.single('image'), async (req, res
       description,
       gender,
       location,
-      isRescueCase = false
+      isRescueCase = false,
+      size,
+      color,
+      healthStatus,
+      vaccinationStatus,
+      spayedNeutered,
+      goodWithKids,
+      goodWithPets,
+      energyLevel
     } = req.body;
 
     // Handle image upload - if file is uploaded, store the path
@@ -169,9 +177,11 @@ app.post('/api/dogs', authenticateToken, upload.single('image'), async (req, res
     const query = `
       INSERT INTO "Dog" (
         name, age, breed, description, gender, location, 
-        "imageUrl", rescuer_id, is_rescue_case, "createdAt"
+        "imageUrl", rescuer_id, is_rescue_case, "createdAt",
+        size, color, health_status, vaccination_status, 
+        spayed_neutered, good_with_kids, good_with_pets, energy_level
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING *
     `;
     
@@ -185,7 +195,15 @@ app.post('/api/dogs', authenticateToken, upload.single('image'), async (req, res
       imageUrl,
       rescuerId,
       isRescueCase,
-      new Date()
+      new Date(),
+      size || null,
+      color || null,
+      healthStatus || null,
+      vaccinationStatus || null,
+      spayedNeutered === 'true' || spayedNeutered === true,
+      goodWithKids === 'true' || goodWithKids === true,
+      goodWithPets === 'true' || goodWithPets === true,
+      energyLevel || null
     ];
 
     const result = await pool.query(query, values);
@@ -203,7 +221,15 @@ app.post('/api/dogs', authenticateToken, upload.single('image'), async (req, res
       status: newDog.status,
       isRescueCase: newDog.is_rescue_case,
       imageUrl: newDog.imageUrl ? `http://localhost:5000${newDog.imageUrl}` : null,
-      createdAt: newDog.createdAt
+      createdAt: newDog.createdAt,
+      size: newDog.size,
+      color: newDog.color,
+      healthStatus: newDog.health_status,
+      vaccinationStatus: newDog.vaccination_status,
+      spayedNeutered: newDog.spayed_neutered,
+      goodWithKids: newDog.good_with_kids,
+      goodWithPets: newDog.good_with_pets,
+      energyLevel: newDog.energy_level
     };
 
     res.status(201).json({
@@ -736,6 +762,171 @@ app.put('/api/rescue/:id/status', authenticateToken, requireAdmin, async (req, r
   } catch (error) {
     console.error('Error updating rescue request status:', error);
     res.status(500).json({ error: 'Failed to update rescue request status' });
+  }
+});
+
+// Rescued dogs endpoints
+app.post('/api/rescued-dogs', authenticateToken, upload.single('image'), async (req, res) => {
+  try {
+    console.log('Received rescued dog request:', req.body)
+    console.log('Received file:', req.file)
+    
+    const {
+      name,
+      breed,
+      age,
+      gender,
+      size,
+      color,
+      healthStatus,
+      description,
+      rescueNotes,
+      rescuerId,
+      rescueDate,
+      rescueRequestId,
+      status,
+      location
+    } = req.body;
+
+    // Handle image upload
+    let imageUrl = null;
+    if (req.file) {
+      imageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    // Insert into separate RescuedDog table
+    const query = `
+      INSERT INTO "RescuedDog" (
+        name, breed, age, gender, size, color, location, 
+        description, image_url, health_status, rescue_notes, 
+        rescue_date, rescuer_id, rescue_request_id, status
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      RETURNING *
+    `;
+    
+    const values = [
+      name,
+      breed,
+      Number(age) || null,
+      gender || 'Unknown',
+      size || null,
+      color || null,
+      location || 'Rescue Center',
+      description || 'Rescued dog',
+      imageUrl,
+      healthStatus || null,
+      rescueNotes || null,
+      rescueDate || new Date(),
+      rescuerId,
+      rescueRequestId || null,
+      status || 'rescued'
+    ];
+
+    console.log('Executing query with values:', values)
+    const result = await pool.query(query, values);
+    const newRescuedDog = result.rows[0];
+    console.log('Query result:', newRescuedDog)
+
+    res.status(201).json({
+      success: true,
+      message: 'Rescued dog added successfully',
+      rescuedDog: {
+        id: newRescuedDog.id,
+        name: newRescuedDog.name,
+        breed: newRescuedDog.breed,
+        age: newRescuedDog.age,
+        gender: newRescuedDog.gender,
+        size: newRescuedDog.size,
+        color: newRescuedDog.color,
+        healthStatus: newRescuedDog.health_status,
+        description: newRescuedDog.description,
+        imageUrl: newRescuedDog.image_url ? `http://localhost:5000${newRescuedDog.image_url}` : null,
+        rescueDate: newRescuedDog.rescue_date,
+        rescuerId: newRescuedDog.rescuer_id,
+        status: newRescuedDog.status,
+        rescueRequestId: newRescuedDog.rescue_request_id,
+        location: newRescuedDog.location,
+        rescueNotes: newRescuedDog.rescue_notes
+      }
+    });
+  } catch (err) {
+    console.error('Error adding rescued dog:', err);
+    console.error('Error details:', err.message, err.stack);
+    res.status(500).json({ error: 'Error adding rescued dog', details: err.message });
+  }
+});
+
+app.get('/api/rescued-dogs', async (req, res) => {
+  try {
+    const query = `
+      SELECT * FROM "RescuedDog" 
+      ORDER BY created_at DESC
+    `;
+    
+    const result = await pool.query(query);
+    const rescuedDogs = result.rows.map(dog => ({
+      id: dog.id,
+      name: dog.name,
+      breed: dog.breed,
+      age: dog.age,
+      gender: dog.gender,
+      size: dog.size,
+      color: dog.color,
+      healthStatus: dog.health_status,
+      description: dog.description,
+      imageUrl: dog.image_url ? `http://localhost:5000${dog.image_url}` : null,
+      rescueDate: dog.rescue_date,
+      rescuerId: dog.rescuer_id,
+      status: dog.status,
+      rescueRequestId: dog.rescue_request_id,
+      location: dog.location,
+      rescueNotes: dog.rescue_notes
+    }));
+
+    res.json({
+      success: true,
+      rescuedDogs: rescuedDogs
+    });
+  } catch (err) {
+    console.error('Error fetching rescued dogs:', err);
+    res.status(500).json({ error: 'Error fetching rescued dogs' });
+  }
+});
+
+// Update rescued dog status
+app.put('/api/rescued-dogs/:id/status', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    // Validate status
+    const validStatuses = ['rescued', 'available_for_adoption', 'adopted'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    
+    const query = `
+      UPDATE "RescuedDog" 
+      SET status = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING *
+    `;
+    
+    const result = await pool.query(query, [status, id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Rescued dog not found' });
+    }
+    
+    res.json({ 
+      success: true,
+      message: 'Rescued dog status updated successfully',
+      rescuedDog: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error updating rescued dog status:', error);
+    res.status(500).json({ error: 'Failed to update rescued dog status' });
   }
 });
 

@@ -1,180 +1,118 @@
-# Rescued Dogs API Setup Guide
+# Rescued Dogs Setup Guide
 
 ## Overview
-I've implemented a complete rescued dogs system that includes:
-- Database table for storing rescued dogs
-- Backend API endpoints for CRUD operations
-- Frontend integration with the rescuer dashboard
+This guide will help you set up the separate RescuedDog table and get the rescue completion functionality working in the rescuer dashboard.
 
-## Database Setup
+## Step 1: Create the RescuedDog Table
+Run the SQL script `create_rescued_dogs_table.sql` in your PostgreSQL database:
 
-### Option 1: Add to existing database
-Run the SQL script `add_rescued_dogs_table.sql` in your PostgreSQL database:
-
-```bash
-psql -U your_username -d your_database -f add_rescued_dogs_table.sql
+```sql
+-- Run this in pgAdmin or your database client
+\i create_rescued_dogs_table.sql
 ```
 
-### Option 2: Use the complete schema
-If you're setting up a new database, use the updated `database_setup.sql` which now includes the RescuedDog table.
+## Step 2: Update Database Schema
+If you haven't already, run the `add_dog_columns.sql` script to add missing columns to the Dog table:
 
-## Backend Files Created/Modified
+```sql
+-- Run this in pgAdmin or your database client
+\i add_dog_columns.sql
+```
 
-### 1. New Controller: `backend/src/controllers/rescuedDogController.js`
-- `getRescuedDogs()` - Get all rescued dogs for a rescuer
-- `addRescuedDog()` - Add a new rescued dog
-- `updateRescuedDogStatus()` - Update dog status
-- `getRescuedDogById()` - Get specific rescued dog
-- `deleteRescuedDog()` - Delete a rescued dog
+## Step 3: Start the Backend Server
+Make sure your backend server is running:
 
-### 2. New Routes: `backend/src/routes/rescuedDogRoutes.js`
-- `GET /api/rescued-dogs` - Get all rescued dogs
-- `POST /api/rescued-dogs` - Add new rescued dog
-- `GET /api/rescued-dogs/:id` - Get specific rescued dog
-- `PUT /api/rescued-dogs/:id/status` - Update status
-- `DELETE /api/rescued-dogs/:id` - Delete rescued dog
+```bash
+cd backend
+npm run backend
+# or
+node src/server.js
+```
 
-### 3. Modified: `backend/src/app.js`
-- Added rescued dogs routes to the main application
+## Step 4: Test the Functionality
+1. Open the rescuer dashboard
+2. Go to "Active Requests" section
+3. Click "Mark Complete" on a rescue request
+4. Fill out the rescue completion form
+5. Submit the form
+
+## Expected Behavior
+- The rescued dog should be added to the `RescuedDog` table
+- The rescue request status should be updated to 'completed'
+- The rescued dog should appear in the "My Rescued Dogs" section
+- You should be able to move the dog to adoption when ready
+
+## Troubleshooting
+
+### Common Issues:
+
+1. **Database Connection Error**
+   - Check your `.env` file has the correct `DATABASE_URL`
+   - Ensure PostgreSQL is running
+   - Verify the database exists
+
+2. **Table Not Found Error**
+   - Run the `create_rescued_dogs_table.sql` script
+   - Check that the table was created successfully
+
+3. **Column Not Found Error**
+   - Run the `add_dog_columns.sql` script
+   - Verify all required columns exist
+
+4. **File Upload Error**
+   - Check that the `uploads` directory exists in the backend
+   - Ensure proper file permissions
+
+### Debug Steps:
+
+1. Check the browser console for frontend errors
+2. Check the backend console for server errors
+3. Verify the API endpoints are responding correctly
+4. Check the database for the created records
 
 ## API Endpoints
 
-### Base URL: `http://localhost:5000/api/rescued-dogs`
+### POST /api/rescued-dogs
+- Creates a new rescued dog
+- Requires authentication
+- Accepts multipart form data with image
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/` | Get all rescued dogs for rescuer | ✅ (Rescuer) |
-| POST | `/` | Add new rescued dog | ✅ (Rescuer) |
-| GET | `/:id` | Get specific rescued dog | ✅ (Rescuer) |
-| PUT | `/:id/status` | Update dog status | ✅ (Rescuer) |
-| DELETE | `/:id` | Delete rescued dog | ✅ (Rescuer) |
+### GET /api/rescued-dogs
+- Retrieves all rescued dogs
+- No authentication required (public endpoint)
 
-## Request/Response Examples
-
-### Add Rescued Dog (POST)
-**Request Body (FormData):**
-```
-name: "Buddy"
-breed: "Golden Retriever"
-age: "3"
-gender: "Male"
-size: "Large"
-color: "Golden"
-healthStatus: "Healthy"
-description: "Friendly dog"
-rescueNotes: "Found wandering"
-image: [file]
-rescueRequestId: "123"
-location: "Downtown"
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Rescued dog added successfully",
-  "rescuedDog": {
-    "id": 1,
-    "name": "Buddy",
-    "breed": "Golden Retriever",
-    "status": "rescued",
-    "rescueDate": "2024-01-15T10:30:00Z"
-  }
-}
-```
-
-### Get Rescued Dogs (GET)
-**Response:**
-```json
-{
-  "success": true,
-  "rescuedDogs": [
-    {
-      "id": 1,
-      "name": "Buddy",
-      "breed": "Golden Retriever",
-      "status": "rescued",
-      "rescuerName": "John Doe"
-    }
-  ]
-}
-```
-
-## Frontend Integration
-
-The frontend has been updated to:
-- Remove development fallbacks
-- Use real API endpoints
-- Handle proper error responses
-- Display rescued dogs in the dashboard
-
-## Testing the API
-
-### 1. Start your backend server
-```bash
-cd backend/src
-npm start
-```
-
-### 2. Test with curl or Postman
-```bash
-# Get rescued dogs (requires auth token)
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-     http://localhost:5000/api/rescued-dogs
-
-# Add rescued dog (requires auth token and image file)
-curl -X POST \
-     -H "Authorization: Bearer YOUR_TOKEN" \
-     -F "name=Buddy" \
-     -F "breed=Golden Retriever" \
-     -F "image=@dog_photo.jpg" \
-     http://localhost:5000/api/rescued-dogs
-```
+### PUT /api/rescued-dogs/:id/status
+- Updates the status of a rescued dog
+- Requires authentication
+- Valid statuses: 'rescued', 'available_for_adoption', 'adopted'
 
 ## Database Schema
 
-```sql
-CREATE TABLE "RescuedDog" (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    breed VARCHAR(100) NOT NULL,
-    age VARCHAR(50),
-    gender VARCHAR(10) CHECK (gender IN ('Male', 'Female')),
-    size VARCHAR(20) CHECK (size IN ('Small', 'Medium', 'Large', 'Extra Large')),
-    color VARCHAR(100),
-    health_status TEXT,
-    description TEXT,
-    rescue_notes TEXT,
-    image_url VARCHAR(500),
-    rescue_date TIMESTAMP NOT NULL,
-    rescuer_id INTEGER REFERENCES "User"(id) NOT NULL,
-    status VARCHAR(30) DEFAULT 'rescued' CHECK (status IN ('rescued', 'adopted', 'available_for_adoption')),
-    rescue_request_id INTEGER REFERENCES "RescueRequest"(id),
-    location VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-## Status Values
-
-- `rescued` - Dog has been rescued but not ready for adoption
-- `available_for_adoption` - Dog is ready to be moved to adoption table
-- `adopted` - Dog has been adopted from rescue
-
-## Security Features
-
-- All endpoints require authentication (`authenticateToken`)
-- All endpoints require rescuer role (`requireRescuer`)
-- Users can only access their own rescued dogs
-- Image uploads are handled securely with file validation
+### RescuedDog Table
+- `id`: Primary key
+- `name`: Dog's name
+- `breed`: Dog's breed
+- `age`: Dog's age
+- `gender`: Dog's gender
+- `size`: Dog's size (Small, Medium, Large, Extra Large)
+- `color`: Dog's color
+- `location`: Where the dog was rescued
+- `description`: Dog's description
+- `image_url`: Path to the dog's photo
+- `health_status`: Current health status
+- `rescue_notes`: Notes about the rescue
+- `rescue_date`: When the rescue was completed
+- `rescuer_id`: ID of the rescuer
+- `rescue_request_id`: ID of the original rescue request
+- `status`: Current status (rescued, available_for_adoption, adopted)
+- `created_at`: When the record was created
+- `updated_at`: When the record was last updated
 
 ## Next Steps
+After setting up the rescued dogs functionality, you can:
+1. Add more fields to the rescue completion form
+2. Implement rescue dog search and filtering
+3. Add rescue dog editing capabilities
+4. Create rescue dog reports and analytics
 
-1. **Run the database script** to create the table
-2. **Restart your backend server** to load the new routes
-3. **Test the API endpoints** to ensure they work
-4. **Use the frontend** to add and manage rescued dogs
-
-The system is now fully integrated and ready to use!
 
