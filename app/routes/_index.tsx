@@ -1,6 +1,6 @@
 import type { Route } from "./+types/_index";
 import LandingPage from "../components/LandingPage";
-import { useNavigate } from "react-router";
+import { useNavigate, Meta } from "react-router";
 import { useEffect } from "react";
 
 export function meta({}: Route.MetaArgs) {
@@ -46,9 +46,12 @@ export default function Index() {
 
   // This is the FIRST page everyone sees - the landing page
   return (
-    <LandingPage 
-      onGetStarted={handleGetStarted}
-      onLearnMore={handleLearnMore}
-    />
+    <>
+      <Meta />
+      <LandingPage 
+        onGetStarted={handleGetStarted}
+        onLearnMore={handleLearnMore}
+      />
+    </>
   );
 }

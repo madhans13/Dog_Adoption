@@ -1,5 +1,6 @@
 import type { Route } from "./+types/adoption";
 import { useState, useEffect } from "react";
+import { Meta } from "react-router";
 import UserHomepage from "../components/UserHomepage";
 import RescuerDashboard from "../components/dashboard/rescuer/RescuerDashboard";
 import AdminDashboard from "../components/dashboard/admin/AdminDashboard";
@@ -100,10 +101,13 @@ export default function Adoption() {
   // For regular users (including guests), show the UserHomepage
   console.log('Routing to User Homepage from adoption route');
   return (
-    <UserHomepage 
-      user={user}
-      onLogout={handleLogout}
-      onLogin={handleAuthSuccess}
-    />
+    <>
+      <Meta />
+      <UserHomepage 
+        user={user}
+        onLogout={handleLogout}
+        onLogin={handleAuthSuccess}
+      />
+    </>
   );
 }

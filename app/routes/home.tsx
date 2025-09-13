@@ -1,5 +1,6 @@
 import type { Route } from "./+types/home";
 import { useState, useEffect } from "react";
+import { Meta } from "react-router";
 import AuthModal from "../components/AuthModal";
 import RescueRequestModal from "../components/RescueRequestModal";
 import RescuerDashboard from "../components/dashboard/rescuer/RescuerDashboard";
@@ -234,7 +235,9 @@ export default function Home() {
   // For rescuer users (when dashboard is not open), show the rescuer interface
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <>
+      <Meta />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}
       <header className="bg-white/95 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-50 shadow-lg">
         <div className="container mx-auto px-4 py-5">
@@ -647,5 +650,6 @@ export default function Home() {
         />
       </div>
     </div>
+    </>
   );
 }
