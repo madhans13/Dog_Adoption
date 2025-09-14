@@ -8,7 +8,7 @@ const app = express();
 
 // Basic middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175','http://localhost:8080'],
   credentials: true
 }));
 
@@ -72,6 +72,9 @@ app.get('/api/dogs', async (req, res) => {
     const result = await pool.query(query, [status, parseInt(limit), parseInt(offset)]);
     const dogs = result.rows;
     
+    // Get server URL from environment or construct it
+    const serverUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 3000}`;
+    
     // Add full image URLs for frontend consumption
     const dogsWithImageUrls = dogs.map(dog => ({
       id: dog.id,
@@ -83,7 +86,7 @@ app.get('/api/dogs', async (req, res) => {
       description: dog.description,
       status: dog.status,
       isRescueCase: dog.is_rescue_case,
-      imageUrl: dog.imageUrl ? `http://localhost:5000${dog.imageUrl}` : null,
+      imageUrl: dog.imageUrl ? `${serverUrl}${dog.imageUrl}` : null,
       createdAt: dog.createdAt,
       rescuer: dog.rescuer_first_name ? {
         firstName: dog.rescuer_first_name,
@@ -191,6 +194,9 @@ app.post('/api/dogs', authenticateToken, upload.single('image'), async (req, res
     const result = await pool.query(query, values);
     const newDog = result.rows[0];
 
+    // Get server URL from environment or construct it
+    const serverUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 3000}`;
+
     // Return dog with full image URL
     const dogWithImageUrl = {
       id: newDog.id,
@@ -202,7 +208,7 @@ app.post('/api/dogs', authenticateToken, upload.single('image'), async (req, res
       description: newDog.description,
       status: newDog.status,
       isRescueCase: newDog.is_rescue_case,
-      imageUrl: newDog.imageUrl ? `http://localhost:5000${newDog.imageUrl}` : null,
+      imageUrl: newDog.imageUrl ? `${serverUrl}${newDog.imageUrl}` : null,
       createdAt: newDog.createdAt
     };
 
@@ -390,6 +396,10 @@ app.get('/api/admin/rescue-requests', authenticateToken, async (req, res) => {
     `;
     
     const result = await pool.query(query);
+    
+    // Get server URL from environment or construct it
+    const serverUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 3000}`;
+    
     const requests = result.rows.map(row => ({
       id: row.id,
       reporterName: row.notes ? row.notes.replace('Reporter: ', '') : 'Anonymous',
@@ -397,7 +407,7 @@ app.get('/api/admin/rescue-requests', authenticateToken, async (req, res) => {
       location: row.location,
       dogType: row.animal_type,
       description: row.description,
-      imageUrls: row.image_urls ? row.image_urls.map(url => `http://localhost:5000${url}`) : [],
+      imageUrls: row.image_urls ? row.image_urls.map(url => `${serverUrl}${url}`) : [],
       status: row.status,
       submittedAt: row.created_at
     }));
@@ -459,6 +469,9 @@ app.post('/api/rescue', authenticateToken, upload.array('images', 5), async (req
     
     console.log('Rescue request result:', newRequest);
     
+    // Get server URL from environment or construct it
+    const serverUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 3000}`;
+    
     res.status(201).json({
       message: 'Rescue request submitted successfully',
       request: {
@@ -468,7 +481,7 @@ app.post('/api/rescue', authenticateToken, upload.array('images', 5), async (req
         location: newRequest.location,
         dogType: newRequest.animal_type,
         description: newRequest.description,
-        imageUrls: newRequest.image_urls ? newRequest.image_urls.map(url => `http://localhost:5000${url}`) : [],
+        imageUrls: newRequest.image_urls ? newRequest.image_urls.map(url => `${serverUrl}${url}`) : [],
         status: newRequest.status,
         submittedAt: newRequest.created_at,
         reporterId: newRequest.user_id
@@ -524,6 +537,9 @@ app.post('/api/rescue/submit', authenticateToken, upload.array('images', 5), asy
     
     console.log('📝 NEW Rescue request result:', newRequest);
     
+    // Get server URL from environment or construct it
+    const serverUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 3000}`;
+    
     res.status(201).json({
       message: 'Rescue request submitted successfully',
       request: {
@@ -533,7 +549,7 @@ app.post('/api/rescue/submit', authenticateToken, upload.array('images', 5), asy
         location: newRequest.location,
         dogType: newRequest.animal_type,
         description: newRequest.description,
-        imageUrls: newRequest.image_urls ? newRequest.image_urls.map(url => `http://localhost:5000${url}`) : [],
+        imageUrls: newRequest.image_urls ? newRequest.image_urls.map(url => `${serverUrl}${url}`) : [],
         status: newRequest.status,
         submittedAt: newRequest.created_at,
         reporterId: newRequest.user_id
@@ -554,6 +570,10 @@ app.get('/api/rescue', async (req, res) => {
     `;
     
     const result = await pool.query(query);
+    
+    // Get server URL from environment or construct it
+    const serverUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 3000}`;
+    
     const requests = result.rows.map(row => ({
       id: row.id,
       reporterName: row.notes ? row.notes.replace('Reporter: ', '') : 'Anonymous',
@@ -561,7 +581,7 @@ app.get('/api/rescue', async (req, res) => {
       location: row.location,
       dogType: row.animal_type,
       description: row.description,
-      imageUrls: row.image_urls ? row.image_urls.map(url => `http://localhost:5000${url}`) : [],
+      imageUrls: row.image_urls ? row.image_urls.map(url => `${serverUrl}${url}`) : [],
       status: row.status,
       submittedAt: row.created_at
     }));
@@ -686,12 +706,15 @@ app.put('/api/rescue/:id/complete', authenticateToken, requireRescuer, upload.si
       
       await pool.query('COMMIT');
       
+      // Get server URL from environment or construct it
+      const serverUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 3000}`;
+      
       res.json({ 
         message: 'Rescue completed successfully',
         request: rescueResult.rows[0],
         rescuedDog: {
           ...newDog,
-          imageUrl: newDog.imageUrl ? `http://localhost:5000${newDog.imageUrl}` : null
+          imageUrl: newDog.imageUrl ? `${serverUrl}${newDog.imageUrl}` : null
         }
       });
     } catch (error) {
@@ -745,7 +768,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-const PORT = process.env.PORT || 5000;
+// Use PORT from environment variables with fallback to 3000
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
