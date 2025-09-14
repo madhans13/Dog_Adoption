@@ -1,8 +1,62 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+
+# Logs
+logs
+*.log
+*.log.*
+debug.log
+error.log
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist/
+build/
+.cache/
+.vite/
+
+# Database
+*.sqlite
+*.db
+*.sql
+
+# Postgres data (Docker volumes should not be committed)
+postgres_data/
+pg_data/
+
+# Docker
+*.pid
+*.seed
+docker-compose.override.yml
+docker-compose.override.*.yml
+
+# IDE & OS files
 .DS_Store
-/node_modules/
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# React Router
-/.react-router/
-/build/
+# Uploads / user-generated content
+uploads/
+public/uploads/
 
-/generated/prisma
+# Coverage / testing
+coverage/
+.nyc_output/
+
+# Optional lock files (if you don’t want them tracked)
+# yarn.lock
+# pnpm-lock.yaml
