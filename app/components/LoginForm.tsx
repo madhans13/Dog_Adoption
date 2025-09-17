@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getApiBaseUrl } from "../lib/utils";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -34,7 +35,8 @@ export default function LoginForm({ onClose, onAuthSuccess }: LoginFormProps) {
         ? { email: formData.email, password: formData.password }
         : formData;
 
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
+      const base = getApiBaseUrl()
+      const response = await fetch(`${base}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

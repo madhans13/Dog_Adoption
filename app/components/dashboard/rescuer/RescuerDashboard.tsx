@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 
 import { AppSidebar } from "../ui/app-sidebar"
+import { getApiBaseUrl } from "../../../lib/utils"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -231,7 +232,8 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
   const fetchRescueRequests = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:5000/api/rescue', {
+      const base = getApiBaseUrl()
+      const response = await fetch(`${base}/api/rescue`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -399,7 +401,8 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
 
   const fetchRescuedDogs = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/rescued-dogs', {
+      const base2 = getApiBaseUrl()
+      const response = await fetch(`${base2}/api/rescued-dogs`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -427,7 +430,8 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
 
   const handleStartRescue = async (requestId: number) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/rescue/${requestId}/start`, {
+      const base3 = getApiBaseUrl()
+      const response = await fetch(`${base3}/api/rescue/${requestId}/start`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -508,7 +512,8 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
       formData.append('status', 'rescued')
 
       // Add the rescued dog to the rescued dogs table
-      const response = await fetch('http://localhost:5000/api/rescued-dogs', {
+      const base4 = getApiBaseUrl()
+      const response = await fetch(`${base4}/api/rescued-dogs`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -605,7 +610,8 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
         formData.append('imageUrl', rescuedDog.imageUrl)
       }
 
-      const response = await fetch('http://localhost:5000/api/dogs', {
+      const base5 = getApiBaseUrl()
+      const response = await fetch(`${base5}/api/dogs`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -666,7 +672,8 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
       formData.append('goodWithPets', dogForm.goodWithPets.toString())
       formData.append('energyLevel', dogForm.energyLevel)
 
-      const response = await fetch('http://localhost:5000/api/dogs', {
+      const base6 = getApiBaseUrl()
+      const response = await fetch(`${base6}/api/dogs`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

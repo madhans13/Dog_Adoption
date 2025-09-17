@@ -3,14 +3,25 @@ import path from 'path';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
+import pkg from 'pg';
+import dotenv from 'dotenv';
 
+dotenv.config();
+
+const { Pool } = pkg;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 const app = express();
 
 // Basic middleware
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175','http://localhost:8080'],
-  credentials: true
-}));
+// app.use(cors({
+//   origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175','http://localhost:8080'],
+//   credentials: true
+// }));
+// app.options('*', cors());
+app.use(cors({ origin: '*', credentials: true }));
+app.options('*', cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -423,12 +434,7 @@ app.get('/api/admin/rescue-requests', authenticateToken, async (req, res) => {
 import pkg from 'pg';
 import dotenv from 'dotenv';
 
-dotenv.config();
 
-const { Pool } = pkg;
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 // Submit rescue request (store in database) - OLD ENDPOINT
 app.post('/api/rescue', authenticateToken, upload.array('images', 5), async (req, res) => {

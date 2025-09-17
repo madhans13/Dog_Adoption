@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Badge } from "../components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { cn } from "../lib/utils";
+import { getApiBaseUrl, buildImageUrl } from "../lib/utils";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -65,7 +66,8 @@ export default function Home() {
   // Fetch dogs
   const fetchDogs = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/dogs');
+      const base = getApiBaseUrl();
+      const response = await fetch(`${base}/api/dogs`);
       const data = await response.json();
       setDogs(data.dogs || data); // Handle both new and old API response formats
     } catch (error) {
@@ -93,7 +95,8 @@ export default function Home() {
         formDataToSend.append('image', selectedFile);
       }
 
-      const response = await fetch('http://localhost:5000/api/dogs', {
+      const base2 = getApiBaseUrl()
+      const response = await fetch(`${base2}/api/dogs`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -506,7 +509,7 @@ export default function Home() {
                     <div className="relative overflow-hidden">
                       {dog.imageUrl ? (
                         <img 
-                          src={dog.imageUrl} 
+                          src={buildImageUrl(dog.imageUrl)} 
                           alt={dog.name}
                           className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-110"
                         />
@@ -606,7 +609,7 @@ export default function Home() {
               
               <div className="mb-4">
                 <img 
-                  src={selectedDogForAdoption.imageUrl || ''} 
+                  src={buildImageUrl(selectedDogForAdoption.imageUrl) || ''} 
                   alt={selectedDogForAdoption.name}
                   className="w-full h-48 object-cover rounded-lg mb-4"
                 />

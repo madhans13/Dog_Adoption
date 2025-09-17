@@ -67,12 +67,11 @@ export const register = async (req, res) => {
     const saltRounds = 12;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create user
+    // Create user - match current User table schema
     const query = `
       INSERT INTO "User" (
-        email, password_hash, first_name, last_name, phone, 
-        address, city, state, zip_code, role
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        email, password_hash, first_name, last_name, phone, address, role
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id, email, first_name, last_name, role, created_at
     `;
 
@@ -81,11 +80,8 @@ export const register = async (req, res) => {
       passwordHash,
       firstName,
       lastName,
-      phone,
-      address,
-      city,
-      state,
-      zipCode,
+      phone ?? null,
+      address ?? null,
       role
     ];
 

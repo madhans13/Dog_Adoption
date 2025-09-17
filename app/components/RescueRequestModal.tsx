@@ -6,6 +6,7 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { cn } from "../lib/utils";
+import { getApiBaseUrl } from "../lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 
 interface User {
@@ -129,7 +130,8 @@ export default function RescueRequestModal({ isOpen, onClose, onSuccess, user }:
       console.log('🚨 Submitting rescue request:', formData);
       console.log('🚨 Selected files:', selectedFiles.length);
 
-      const response = await fetch('http://localhost:5000/api/rescue/submit', {
+      const base = getApiBaseUrl()
+      const response = await fetch(`${base}/api/rescue/submit`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

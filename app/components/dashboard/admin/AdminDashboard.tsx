@@ -1,5 +1,6 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
+import { getApiBaseUrl } from "../../../lib/utils"
 import {
   Users,
   Heart,
@@ -195,7 +196,8 @@ export default function AdminDashboard({ isOpen, onClose, userToken }: AdminDash
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/stats', {
+      const base = getApiBaseUrl()
+      const response = await fetch(`${base}/api/admin/stats`, {
         headers: {
           'Authorization': `Bearer ${userToken}`,
           'Content-Type': 'application/json',
@@ -212,7 +214,8 @@ export default function AdminDashboard({ isOpen, onClose, userToken }: AdminDash
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/users', {
+      const base2 = getApiBaseUrl()
+      const response = await fetch(`${base2}/api/admin/users`, {
         headers: {
           'Authorization': `Bearer ${userToken}`,
           'Content-Type': 'application/json',
@@ -240,7 +243,8 @@ export default function AdminDashboard({ isOpen, onClose, userToken }: AdminDash
 
   const fetchRescueRequests = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/rescue-requests', {
+      const base3 = getApiBaseUrl()
+      const response = await fetch(`${base3}/api/admin/rescue-requests`, {
         headers: {
           'Authorization': `Bearer ${userToken}`,
           'Content-Type': 'application/json',
@@ -270,7 +274,8 @@ export default function AdminDashboard({ isOpen, onClose, userToken }: AdminDash
 
   const handleUserRoleChange = async (userId: number, newRole: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}/role`, {
+      const base4 = getApiBaseUrl()
+      const response = await fetch(`${base4}/api/admin/users/${userId}/role`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${userToken}`,
@@ -288,7 +293,8 @@ export default function AdminDashboard({ isOpen, onClose, userToken }: AdminDash
 
   const handleRescueStatusChange = async (requestId: number, status: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/rescue/${requestId}/status`, {
+      const base5 = getApiBaseUrl()
+      const response = await fetch(`${base5}/api/rescue/${requestId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${userToken}`,

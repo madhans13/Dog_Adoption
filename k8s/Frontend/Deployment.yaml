@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dog-adoption-frontend
+  labels:
+    app: dog-adoption-frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dog-adoption-frontend
+  template:
+    metadata:
+      labels:
+        app: dog-adoption-frontend
+    spec:
+      containers:
+        - name: dog-adoption-frontend
+          image: madhan13/dog-adoption-frontend:v4
+          imagePullPolicy: Always
+          env:
+            - name: RUNTIME_API_BASE_URL
+              value: "http://dog-adoption-backend:5000"
+          ports:
+            - containerPort: 8080
+              

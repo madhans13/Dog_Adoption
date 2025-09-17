@@ -6,6 +6,8 @@ COPY package.json package-lock.json ./
 RUN npm install
 
 COPY . .
+
+# Build the frontend normally; we inject a small runtime config file instead of bake-time env
 RUN npm run build
 
 # Production Stage
@@ -14,11 +16,14 @@ WORKDIR /app
 
 COPY --from=build-stage /app/build ./build
 COPY package.json package-lock.json ./
-
 RUN npm ci --omit=dev
 
-# Set custom port for react-router-serve
+# Set default port
 ENV PORT=8080
-
 EXPOSE 8080
-CMD ["npx", "react-router-serve", "./build/server/index.js", "--port", "8080"]
+
+# Copy the entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+CMD ["/entrypoint.sh"]

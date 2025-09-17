@@ -6,8 +6,9 @@ import simpleDogRoutes from './routes/simpleDogRoutes.js';
 const app = express();
 
 // Basic middleware
+const allowedOrigins = (process.env.FRONTEND_URL || '').split(',').filter(Boolean);
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: allowedOrigins.length ? allowedOrigins : true,
   credentials: true
 }));
 

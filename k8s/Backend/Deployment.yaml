@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dog-adoption
+  name: dog-adoption-backend
   labels: 
     app: dog-adoption-backend
 spec:
@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: dog-adoption-backend
-          image: madhan13/dog-adoption-backend:v5
+          image: madhan13/dog-adoption-backend:v6
           imagePullPolicy: Always
           env:
             - name: NODE_ENV
@@ -33,3 +33,10 @@ spec:
               value: "http://dog-adoption-frontend:8080,http://localhost:8080,http://127.0.0.1:8080"
           ports:
             - containerPort: 5000
+          volumeMounts:
+            - name: uploads-storage
+              mountPath: /app/uploads
+      volumes:
+        - name: uploads-storage
+          persistentVolumeClaim:
+            claimName: uploads-pvc

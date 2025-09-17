@@ -9,6 +9,7 @@ import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Checkbox } from "./ui/checkbox";
 import { cn } from "../lib/utils";
+import { getApiBaseUrl } from "../lib/utils";
 
 interface RescueRequest {
   id: number;
@@ -88,7 +89,8 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/rescue', {
+      const base = getApiBaseUrl()
+      const response = await fetch(`${base}/api/rescue`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -172,7 +174,8 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
     
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/rescue/${request.id}/start`, {
+      const base2 = getApiBaseUrl()
+      const response = await fetch(`${base2}/api/rescue/${request.id}/start`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -235,7 +238,8 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
         formData.append('rescuePhoto', rescuePhoto);
       }
       
-      const response = await fetch(`http://localhost:5000/api/rescue/${completingRequest.id}/complete`, {
+      const base3 = getApiBaseUrl()
+      const response = await fetch(`${base3}/api/rescue/${completingRequest.id}/complete`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -282,7 +286,8 @@ export default function RescuerDashboard({ isOpen, onClose, user }: RescuerDashb
       // Get token from localStorage (assuming it's stored there)
       const token = localStorage.getItem('token');
 
-      const response = await fetch('http://localhost:5000/api/dogs', {
+      const base4 = getApiBaseUrl()
+      const response = await fetch(`${base4}/api/dogs`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`, // Required for authenticated endpoint
