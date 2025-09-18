@@ -17,6 +17,13 @@ spec:
                 name: dog-adoption-backend
                 port:
                   number: 5000
+          - path: /uploads
+            pathType: Prefix
+            backend:
+              service:
+                name: dog-adoption-backend
+                port:
+                  number: 5000
           - path: /
             pathType: Prefix
             backend:

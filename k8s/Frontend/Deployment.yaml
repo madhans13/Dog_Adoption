@@ -20,7 +20,7 @@ spec:
           imagePullPolicy: Always
           env:
             - name: RUNTIME_API_BASE_URL
-              value: "https://mydogapp.203-0-113-45.nip.io"
+              value: "http://mydogapp.203-0-113-45.nip.io"
           ports:
             - containerPort: 8080
               

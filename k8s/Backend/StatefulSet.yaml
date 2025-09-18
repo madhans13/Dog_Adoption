@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: dog-adoption
+  namespace: dog-adoption
+spec:
+  serviceName: "dog-adoption"
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dog-adoption-backend
+  template:
+    metadata:
+      labels:
+        app: dog-adoption-backend
+    spec:
+      securityContext:
+        fsGroup: 1001
+        runAsUser: 1001
+        runAsGroup: 1001
+      containers:
+        - name: dog-adoption-backend
+          image: madhan13/dog-adoption-backend:v9
+          imagePullPolicy: Always
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "5000"
+            - name: DATABASE_URL
+              value: "postgresql://postgres:postgres@dog-rescue-db:5432/dog_rescue_db"
+            - name: JWT_SECRET
+              value: "your-super-secret-jwt-key-change-in-production"
+            - name: SERVER_URL
+              value: "http://mydogapp.203-0-113-45.nip.io"
+            - name: CORS_ORIGINS
+              value: "http://mydogapp.203-0-113-45.nip.io,http://localhost:5173,http://localhost:8080"
+            - name: FRONTEND_URL
+              value: "http://mydogapp.203-0-113-45.nip.io,http://localhost:8080,http://127.0.0.1:8080"
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: uploads-storage
+              mountPath: /app/uploads
+  volumeClaimTemplates:
+    - metadata:
+        name: uploads-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: gp2
+        resources:
+          requests:
+            storage: 1Gi

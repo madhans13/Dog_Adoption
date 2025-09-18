@@ -13,7 +13,7 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 const app = express();
-
+app.set('trust proxy', 1); 
 // Basic middleware
 // app.use(cors({
 //   origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175','http://localhost:8080'],

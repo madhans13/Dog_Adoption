@@ -16,7 +16,7 @@ RUN npm ci --only=production
 COPY --chown=backend:nodejs . .
 
 # Create uploads directory (owned by backend)
-RUN mkdir -p uploads
+RUN mkdir -p uploads && chown -R backend:nodejs uploads
 
 # Switch to non-root user
 USER backend
