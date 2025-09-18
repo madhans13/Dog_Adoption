@@ -16,11 +16,11 @@ spec:
     spec:
       containers:
         - name: dog-adoption-frontend
-          image: madhan13/dog-adoption-frontend:v4
+          image: madhan13/dog-adoption-frontend:v17
           imagePullPolicy: Always
           env:
             - name: RUNTIME_API_BASE_URL
-              value: "http://dog-adoption-backend:5000"
+              value: "https://mydogapp.203-0-113-45.nip.io"
           ports:
             - containerPort: 8080
               

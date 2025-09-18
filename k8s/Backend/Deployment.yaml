@@ -1,11 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dog-adoption-backend
+  name: dog-adoption
+  namespace: dog-adoption
   labels: 
     app: dog-adoption-backend
 spec:
-  replicas: 3
+  replicas: 3   # or 3 if you switch to RWX storage (EFS)
   selector:
     matchLabels: 
       app: dog-adoption-backend
@@ -16,7 +17,7 @@ spec:
     spec:
       containers:
         - name: dog-adoption-backend
-          image: madhan13/dog-adoption-backend:v6
+          image: madhan13/dog-adoption-backend:v7
           imagePullPolicy: Always
           env:
             - name: NODE_ENV
@@ -28,15 +29,17 @@ spec:
             - name: JWT_SECRET
               value: "your-super-secret-jwt-key-change-in-production"
             - name: SERVER_URL
-              value: "http://dog-adoption-backend:5000"
+              value: "https://mydogapp.203-0-113-45.nip.io"
+            - name: CORS_ORIGINS
+              value: "https://mydogapp.203-0-113-45.nip.io,http://localhost:5173,http://localhost:8080"
             - name: FRONTEND_URL
-              value: "http://dog-adoption-frontend:8080,http://localhost:8080,http://127.0.0.1:8080"
+              value: "https://mydogapp.203-0-113-45.nip.io,http://localhost:8080,http://127.0.0.1:8080"
           ports:
             - containerPort: 5000
           volumeMounts:
             - name: uploads-storage
               mountPath: /app/uploads
-      volumes:
+      volumes:   # ✅ must be under spec.template.spec
         - name: uploads-storage
           persistentVolumeClaim:
             claimName: uploads-pvc

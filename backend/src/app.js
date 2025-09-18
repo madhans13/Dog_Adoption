@@ -1,6 +1,5 @@
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -15,11 +14,6 @@ import rescuedDogRoutes from './routes/rescuedDogRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 
 const app = express();
-
-// Resolve __dirname in ESM and set uploads directory robustly
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const uploadsDir = process.env.UPLOADS_DIR || path.resolve(__dirname, '../../uploads');
 
 // Security middleware
 app.use(helmet({
@@ -51,8 +45,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Static file serving for uploaded images
-app.use('/uploads', express.static(uploadsDir));
+// Static file serving
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dog-adoption-ingress
+  namespace: dog-adoption
+  annotations: {}
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: mydogapp.203-0-113-45.nip.io
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: dog-adoption-backend
+                port:
+                  number: 5000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dog-adoption-frontend
+                port:
+                  number: 80

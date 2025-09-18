@@ -20,9 +20,33 @@ const app = express();
 //   credentials: true
 // }));
 // app.options('*', cors());
-app.use(cors({ origin: '*', credentials: true }));
-app.options('*', cors());
+const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').map(origin => origin.trim());
 
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS policy: Origin ${origin} not allowed`));
+    }
+  },
+  credentials: true
+}));
+
+app.options('*', cors({
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS policy: Origin ${origin} not allowed`));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Badge } from "../components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
 import { cn } from "../lib/utils";
-import { getApiBaseUrl, buildImageUrl } from "../lib/utils";
+import { getApiBaseUrl } from "../lib/utils";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -509,7 +509,7 @@ export default function Home() {
                     <div className="relative overflow-hidden">
                       {dog.imageUrl ? (
                         <img 
-                          src={buildImageUrl(dog.imageUrl)} 
+                          src={dog.imageUrl} 
                           alt={dog.name}
                           className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-110"
                         />
@@ -609,7 +609,7 @@ export default function Home() {
               
               <div className="mb-4">
                 <img 
-                  src={buildImageUrl(selectedDogForAdoption.imageUrl) || ''} 
+                  src={selectedDogForAdoption.imageUrl || ''} 
                   alt={selectedDogForAdoption.name}
                   className="w-full h-48 object-cover rounded-lg mb-4"
                 />

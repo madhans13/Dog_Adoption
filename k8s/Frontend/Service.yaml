@@ -8,7 +8,7 @@ spec:
     selector:
         app: dog-adoption-frontend
     ports:
-        - port: 8080
+        - port: 80
           targetPort: 8080
           protocol: TCP
     type: ClusterIP
