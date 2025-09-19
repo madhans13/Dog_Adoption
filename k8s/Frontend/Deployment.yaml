@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dog-adoption-frontend
+  namespace: dog-adoption
   labels:
     app: dog-adoption-frontend
 spec:
@@ -16,11 +17,11 @@ spec:
     spec:
       containers:
         - name: dog-adoption-frontend
-          image: madhan13/dog-adoption-frontend:v17
+          image: madhan13/dog-adoption-frontend:v19
           imagePullPolicy: Always
           env:
             - name: RUNTIME_API_BASE_URL
-              value: "http://mydogapp.203-0-113-45.nip.io"
+              value: "https://dog-adoption.dev"
           ports:
             - containerPort: 8080
               

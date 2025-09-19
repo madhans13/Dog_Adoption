@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: dog-adoption-backend
+  namespace: dog-adoption
   labels:
     app: dog-adoption-backend
 spec:

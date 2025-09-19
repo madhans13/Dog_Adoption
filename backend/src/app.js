@@ -15,6 +15,9 @@ import adminRoutes from './routes/adminRoutes.js';
 
 const app = express();
 
+// Trust proxy for LoadBalancer/Ingress
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
@@ -23,13 +26,14 @@ app.use(helmet({
 // Rate limiting
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 100, // Limit each IP
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-app.use(generalLimiter);
+
+// app.use(generalLimiter); // Temporarily disabled for LoadBalancer compatibility
 
 // CORS configuration
 const allowedOrigins = (process.env.FRONTEND_URL || '').split(',').filter(Boolean);
@@ -45,8 +49,18 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Static file serving
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Static file serving with proper cache headers
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
+  setHeaders: (res, path) => {
+    // Set cache headers for image files
+    if (path.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
+      res.setHeader('Expires', new Date(Date.now() + 31536000000).toUTCString()); // 1 year
+      res.setHeader('Last-Modified', new Date().toUTCString());
+      res.setHeader('ETag', `"${Date.now()}"`);
+    }
+  }
+}));
 
 // Health check endpoint
 app.get('/health', (req, res) => {

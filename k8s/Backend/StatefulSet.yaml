@@ -20,7 +20,7 @@ spec:
         runAsGroup: 1001
       containers:
         - name: dog-adoption-backend
-          image: madhan13/dog-adoption-backend:v9
+          image: madhan13/dog-adoption-backend:v13
           imagePullPolicy: Always
           env:
             - name: NODE_ENV
@@ -32,11 +32,11 @@ spec:
             - name: JWT_SECRET
               value: "your-super-secret-jwt-key-change-in-production"
             - name: SERVER_URL
-              value: "http://mydogapp.203-0-113-45.nip.io"
+              value: "https://dog-adoption.dev"
             - name: CORS_ORIGINS
-              value: "http://mydogapp.203-0-113-45.nip.io,http://localhost:5173,http://localhost:8080"
+              value: "https://dog-adoption.dev,https://www.dog-adoption.dev,http://mydogapp.203-0-113-45.nip.io,http://localhost:5173,http://localhost:8080"
             - name: FRONTEND_URL
-              value: "http://mydogapp.203-0-113-45.nip.io,http://localhost:8080,http://127.0.0.1:8080"
+              value: "https://dog-adoption.dev,https://www.dog-adoption.dev,http://mydogapp.203-0-113-45.nip.io,http://localhost:8080,http://127.0.0.1:8080"
           ports:
             - containerPort: 5000
           volumeMounts:
@@ -47,7 +47,7 @@ spec:
         name: uploads-storage
       spec:
         accessModes: ["ReadWriteOnce"]
-        storageClassName: gp2
+        storageClassName: civo-volume
         resources:
           requests:
             storage: 1Gi

@@ -3,10 +3,69 @@ kind: Ingress
 metadata:
   name: dog-adoption-ingress
   namespace: dog-adoption
-  annotations: {}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - dog-adoption.dev
+        - www.dog-adoption.dev
+      secretName: dog-adoption-tls
   rules:
+    # Production domain
+    - host: dog-adoption.dev
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: dog-adoption-backend
+                port:
+                  number: 5000
+          - path: /uploads
+            pathType: Prefix
+            backend:
+              service:
+                name: dog-adoption-backend
+                port:
+                  number: 5000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dog-adoption-frontend
+                port:
+                  number: 80
+    # www subdomain
+    - host: www.dog-adoption.dev
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: dog-adoption-backend
+                port:
+                  number: 5000
+          - path: /uploads
+            pathType: Prefix
+            backend:
+              service:
+                name: dog-adoption-backend
+                port:
+                  number: 5000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dog-adoption-frontend
+                port:
+                  number: 80
+    # Development/testing domain (keep for testing)
     - host: mydogapp.203-0-113-45.nip.io
       http:
         paths:

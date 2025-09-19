@@ -41,3 +41,23 @@ export function buildImageUrl(imageUrl?: string | null): string {
   const base = getApiBaseUrl()
   return `${base}${url}`
 }
+
+// Build image URL with consistent formatting
+export function buildImageUrlSafe(imageUrl?: string | null): string {
+  if (!imageUrl) return ''
+  const url = String(imageUrl)
+  
+  // If it's already a full URL, return as is
+  if (/^https?:\/\//i.test(url)) return url
+  
+  // If it starts with /, use it directly
+  if (url.startsWith('/')) {
+    const base = getApiBaseUrl()
+    return `${base}${url}`
+  }
+  
+  // Otherwise, add /uploads/ prefix if it doesn't have it
+  const base = getApiBaseUrl()
+  const normalizedUrl = url.startsWith('/uploads/') ? url : `/uploads/${url}`
+  return `${base}${normalizedUrl}`
+}

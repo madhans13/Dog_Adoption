@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { getApiBaseUrl } from "../lib/utils";
+import { getApiBaseUrl, buildImageUrlSafe } from "../lib/utils";
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Button } from "./ui/button";
 import DogAdoptionNavigation from './DogAdoptionNavigation';
@@ -515,7 +515,7 @@ export default function LandingPage({ onGetStarted, onLearnMore }: LandingPagePr
                 >
                                      <div className="h-64 bg-cover bg-center relative">
                      <img 
-                       src={dog.image} 
+                       src={buildImageUrlSafe(dog.image)} 
                        alt={`${dog.name} - ${dog.breed}`}
                        className="w-full h-full object-cover"
                        onError={(e) => {
