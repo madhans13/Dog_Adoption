@@ -44,13 +44,10 @@ jobs:
       k8s: ${{ steps.changes.outputs.k8s }}
       shared: ${{ steps.changes.outputs.shared }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Detect changes
-        uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v2
         id: changes
         with:
           filters: |
@@ -82,39 +79,21 @@ jobs:
       matrix:
         node-version: [20]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-
-      - name: Cache node modules
-        uses: actions/cache@v3
+      - uses: actions/cache@v3
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Run frontend linting
-        run: npm run lint
-        continue-on-error: true
-
-      - name: Run frontend tests
-        run: npm test -- --coverage --watchAll=false --passWithNoTests
-        continue-on-error: true
-
-      - name: Build frontend
-        run: npm run build
-
-      - name: Upload frontend test coverage
-        uses: codecov/codecov-action@v3
+          restore-keys: ${{ runner.os }}-node-
+      - run: npm ci --legacy-peer-deps
+      - run: npm run lint || true
+      - run: npm test -- --coverage --watchAll=false --passWithNoTests || true
+      - run: npm run build
+      - uses: codecov/codecov-action@v3
         with:
           file: ./coverage/lcov.info
           flags: frontend
@@ -143,42 +122,26 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-
-      - name: Cache node modules
-        uses: actions/cache@v3
+      - uses: actions/cache@v3
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Run backend linting
-        run: npm run lint:backend
-        continue-on-error: true
-
-      - name: Run backend tests
+          restore-keys: ${{ runner.os }}-node-
+      - run: npm ci --legacy-peer-deps
+      - run: npm run lint:backend || true
+      - run: npm run test:backend
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
           PORT: 3001
-        run: npm run test:backend
         continue-on-error: true
-
-      - name: Upload backend test coverage
-        uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v3
         with:
           file: ./coverage/lcov.info
           flags: backend
@@ -190,27 +153,22 @@ jobs:
     runs-on: ubuntu-latest
     needs: [detect-changes, test-frontend, test-backend]
     if: |
-      always() && 
-      (needs.detect-changes.outputs.frontend == 'true' || 
+      always() &&
+      (needs.detect-changes.outputs.frontend == 'true' ||
        needs.detect-changes.outputs.backend == 'true' ||
        needs.detect-changes.outputs.k8s == 'true') &&
       (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') &&
       (needs.test-backend.result == 'success' || needs.test-backend.result == 'skipped')
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'sarif'
           output: 'trivy-results.sarif'
         continue-on-error: true
-
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v2
+      - uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: 'trivy-results.sarif'
         continue-on-error: true
@@ -220,51 +178,38 @@ jobs:
     runs-on: ubuntu-latest
     needs: [detect-changes, test-frontend, security-scan]
     if: |
-      always() && 
-      github.event_name == 'push' && 
-      github.ref == 'refs/heads/master' && 
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/master' &&
       needs.detect-changes.outputs.frontend == 'true' &&
       needs.detect-changes.outputs.backend != 'true' &&
       (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') &&
       (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
-      contents: read
+      contents: write
       packages: write
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Get latest frontend version
-        id: frontend_version
+      - id: frontend_version
         run: |
           REPO="${{ secrets.DOCKER_USERNAME }}/dog-adoption-frontend"
-          LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" | \
-            jq -r '.results[].name' | \
-            grep -E '^v[0-9]+$' | \
-            sed 's/v//' | \
-            sort -n | \
+          LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" |
+            jq -r '.results[].name' |
+            grep -E '^v[0-9]+$' |
+            sed 's/v//' |
+            sort -n |
             tail -1)
-          
           if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
             LATEST_VERSION=19
           fi
-          
           NEW_VERSION=$((LATEST_VERSION + 1))
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "Frontend version: v$NEW_VERSION"
-
-      - name: Build & Push Frontend
-        uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v5
         with:
           context: .
           file: ./app/Dockerfile
@@ -275,57 +220,51 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
+      - run: |
+          sed -i "s|\(image: .*/dog-adoption-frontend:\).*|\1v${{ steps.frontend_version.outputs.new_version }}|" k8s/frontend-deployment.yaml
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add k8s/frontend-deployment.yaml
+          git commit -m "Update frontend image to v${{ steps.frontend_version.outputs.new_version }}" || echo "No changes to commit"
+          git push
 
   # ==================== BUILD & PUSH BACKEND ====================
   build-backend:
     runs-on: ubuntu-latest
     needs: [detect-changes, test-backend, security-scan]
     if: |
-      always() && 
-      github.event_name == 'push' && 
-      github.ref == 'refs/heads/master' && 
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/master' &&
       needs.detect-changes.outputs.backend == 'true' &&
       needs.detect-changes.outputs.frontend != 'true' &&
       (needs.test-backend.result == 'success' || needs.test-backend.result == 'skipped') &&
       (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
-      contents: read
+      contents: write
       packages: write
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Get latest backend version
-        id: backend_version
+      - id: backend_version
         run: |
           REPO="${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend"
-          LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" | \
-            jq -r '.results[].name' | \
-            grep -E '^v[0-9]+$' | \
-            sed 's/v//' | \
-            sort -n | \
+          LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" |
+            jq -r '.results[].name' |
+            grep -E '^v[0-9]+$' |
+            sed 's/v//' |
+            sort -n |
             tail -1)
-          
           if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
             LATEST_VERSION=13
           fi
-          
           NEW_VERSION=$((LATEST_VERSION + 1))
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "Backend version: v$NEW_VERSION"
-
-      - name: Build & Push Backend
-        uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v5
         with:
           context: .
           file: ./backend/Dockerfile
@@ -336,77 +275,69 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
+      - run: |
+          sed -i "s|\(image: .*/dog-adoption-backend:\).*|\1v${{ steps.backend_version.outputs.new_version }}|" k8s/backend-deployment.yaml
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add k8s/backend-deployment.yaml
+          git commit -m "Update backend image to v${{ steps.backend_version.outputs.new_version }}" || echo "No changes to commit"
+          git push
 
-  # ==================== BUILD & PUSH BOTH (when both change) ====================
+  # ==================== BUILD & PUSH BOTH ====================
   build-both:
     runs-on: ubuntu-latest
     needs: [detect-changes, test-frontend, test-backend, security-scan]
     if: |
-      always() && 
-      github.event_name == 'push' && 
-      github.ref == 'refs/heads/master' && 
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/master' &&
       needs.detect-changes.outputs.frontend == 'true' &&
       needs.detect-changes.outputs.backend == 'true' &&
       (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') &&
       (needs.test-backend.result == 'success' || needs.test-backend.result == 'skipped') &&
       (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
-      contents: read
+      contents: write
       packages: write
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Get latest frontend version
-        id: frontend_version
+      - id: frontend_version
         run: |
           REPO="${{ secrets.DOCKER_USERNAME }}/dog-adoption-frontend"
-          LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" | \
-            jq -r '.results[].name' | \
-            grep -E '^v[0-9]+$' | \
-            sed 's/v//' | \
-            sort -n | \
+          LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" |
+            jq -r '.results[].name' |
+            grep -E '^v[0-9]+$' |
+            sed 's/v//' |
+            sort -n |
             tail -1)
-          
           if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
             LATEST_VERSION=19
           fi
-          
           NEW_VERSION=$((LATEST_VERSION + 1))
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "Frontend version: v$NEW_VERSION"
 
-      - name: Get latest backend version
-        id: backend_version
+      - id: backend_version
         run: |
           REPO="${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend"
-          LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" | \
-            jq -r '.results[].name' | \
-            grep -E '^v[0-9]+$' | \
-            sed 's/v//' | \
-            sort -n | \
+          LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" |
+            jq -r '.results[].name' |
+            grep -E '^v[0-9]+$' |
+            sed 's/v//' |
+            sort -n |
             tail -1)
-          
           if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
             LATEST_VERSION=13
           fi
-          
           NEW_VERSION=$((LATEST_VERSION + 1))
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "Backend version: v$NEW_VERSION"
 
-      - name: Build & Push Frontend
-        uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v5
         with:
           context: .
           file: ./app/Dockerfile
@@ -418,8 +349,7 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
-      - name: Build & Push Backend
-        uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v5
         with:
           context: .
           file: ./backend/Dockerfile
@@ -431,49 +361,31 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
-  # ==================== KUBERNETES DEPLOYMENT ====================
-  deploy-k8s:
-    runs-on: ubuntu-latest
-    needs: [detect-changes, build-frontend, build-backend, build-both]
-    if: |
-      always() && 
-      github.event_name == 'push' && 
-      github.ref == 'refs/heads/master' && 
-      needs.detect-changes.outputs.k8s == 'true' &&
-      (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
-      (needs.build-backend.result == 'success' || needs.build-backend.result == 'skipped') &&
-      (needs.build-both.result == 'success' || needs.build-both.result == 'skipped')
-    environment: production
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - run: |
+          sed -i "s|\(image: .*/dog-adoption-frontend:\).*|\1v${{ steps.frontend_version.outputs.new_version }}|" k8s/frontend-deployment.yaml
+          sed -i "s|\(image: .*/dog-adoption-backend:\).*|\1v${{ steps.backend_version.outputs.new_version }}|" k8s/backend-deployment.yaml
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add k8s/frontend-deployment.yaml k8s/backend-deployment.yaml
+          git commit -m "Update frontend to v${{ steps.frontend_version.outputs.new_version }} and backend to v${{ steps.backend_version.outputs.new_version }}" || echo "No changes to commit"
+          git push
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
-
-      - name: Configure kubectl
-        run: |
-          # Add your kubectl configuration here
-          echo "Kubernetes deployment would happen here"
-          echo "This step would update your K8s manifests with new image tags"
-
-  # ==================== NOTIFICATION ====================
+  # ==================== NOTIFY ====================
   notify:
     runs-on: ubuntu-latest
-    needs: [build-frontend, build-backend, build-both, deploy-k8s]
+    needs: [build-frontend, build-backend, build-both]
     if: always()
     steps:
-      - name: Notify deployment status
-        run: |
+      - run: |
           if [ "${{ needs.build-frontend.result }}" == "success" ] || [ "${{ needs.build-backend.result }}" == "success" ] || [ "${{ needs.build-both.result }}" == "success" ]; then
             echo "✅ Deployment successful!"
             echo "Frontend: ${{ needs.build-frontend.result }}"
             echo "Backend: ${{ needs.build-backend.result }}"
             echo "Both: ${{ needs.build-both.result }}"
-            echo "K8s: ${{ needs.deploy-k8s.result }}"
           else
             echo "❌ Deployment failed!"
+            echo "Frontend: ${{ needs.build-frontend.result }}"
+            echo "Backend: ${{ needs.build-backend.result }}"
+            echo "Both: ${{ needs.build-both.result }}"
             exit 1
           fi
