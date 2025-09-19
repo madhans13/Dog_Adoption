@@ -1,13 +1,125 @@
-name: CI - Build & Push Docker Images
+name: CI/CD - Test, Build & Push Docker Images
 
 on:
   push:
     branches:
       - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
+  # ==================== TESTING JOBS ====================
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run frontend linting
+        run: npm run lint
+        continue-on-error: false
+
+      - name: Run frontend tests
+        run: npm run test -- --coverage --watchAll=false
+
+      - name: Upload frontend test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+
+      - name: Build frontend for testing
+        run: npm run build
+
+  test-backend:
+    runs-on: ubuntu-latest
+    services:
+      # Add database service if needed (MongoDB, PostgreSQL, etc.)
+      mongodb:
+        image: mongo:7
+        env:
+          MONGO_INITDB_ROOT_USERNAME: testuser
+          MONGO_INITDB_ROOT_PASSWORD: testpass
+        options: >-
+          --health-cmd "echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Run backend linting
+        run: |
+          npx eslint backend/ --ext .js,.ts
+          # or if you have it as a script: npm run lint:backend
+
+      - name: Run backend tests
+        env:
+          NODE_ENV: test
+          DATABASE_URL: mongodb://testuser:testpass@localhost:27017/testdb
+          PORT: 3001
+        run: |
+          npm run test:backend
+          # or if using jest directly: npx jest backend/ --coverage
+
+      - name: Upload backend test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+
+  # ==================== SECURITY SCAN ====================
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: [test-frontend, test-backend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # ==================== BUILD & DEPLOY ====================
   build-and-push:
     runs-on: ubuntu-latest
+    needs: [test-frontend, test-backend, security-scan]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     permissions:
       contents: read
       packages: write
@@ -29,11 +141,9 @@ jobs:
       - name: Get latest frontend version from Docker Hub
         id: frontend_version
         run: |
-          # Get latest version tag from Docker Hub API
           REPO="${{ secrets.DOCKER_USERNAME }}/dog-adoption-frontend"
           echo "Fetching latest version for $REPO..."
           
-          # Fetch tags and extract version numbers (assuming format: v1, v2, v3, etc.)
           LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" | \
             jq -r '.results[].name' | \
             grep -E '^v[0-9]+$' | \
@@ -54,11 +164,9 @@ jobs:
       - name: Get latest backend version from Docker Hub
         id: backend_version
         run: |
-          # Get latest version tag from Docker Hub API
           REPO="${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend"
           echo "Fetching latest version for $REPO..."
           
-          # Fetch tags and extract version numbers (assuming format: v1, v2, v3, etc.)
           LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" | \
             jq -r '.results[].name' | \
             grep -E '^v[0-9]+$' | \
@@ -100,6 +208,23 @@ jobs:
       # -------- SUMMARY --------
       - name: Build Summary
         run: |
-          echo "🚀 Build completed successfully!"
+          echo "🎉 CI/CD Pipeline completed successfully!"
+          echo "✅ Tests passed"
+          echo "🔒 Security scan completed"
           echo "📦 Frontend: ${{ secrets.DOCKER_USERNAME }}/dog-adoption-frontend:v${{ steps.frontend_version.outputs.new_version }}"
           echo "📦 Backend: ${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend:v${{ steps.backend_version.outputs.new_version }}"
+
+  # ==================== NOTIFICATION ====================
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: always()
+    steps:
+      - name: Notify deployment status
+        run: |
+          if [ "${{ needs.build-and-push.result }}" == "success" ]; then
+            echo "✅ Deployment successful!"
+          else
+            echo "❌ Deployment failed!"
+            exit 1
+          fi
