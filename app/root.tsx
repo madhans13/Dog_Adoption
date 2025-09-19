@@ -79,3 +79,4 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   );
 }
 // Test frontend-only build - Fri, Sep 19, 2025  3:54:57 PM
+//testing frontend changes
