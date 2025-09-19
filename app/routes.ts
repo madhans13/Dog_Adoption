@@ -5,3 +5,4 @@ export default [
   route("adoption", "routes/adoption.tsx"),
   route("home", "routes/home.tsx")
 ] satisfies RouteConfig;
+// Test frontend-only build
