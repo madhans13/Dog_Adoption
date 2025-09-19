@@ -1,64 +1,119 @@
-name: CI/CD - Test, Build & Push Docker Images
+name: CI/CD - Smart Build & Deploy
 
 on:
   push:
     branches:
       - master
+    paths:
+      - 'app/**'
+      - 'src/**'
+      - 'backend/**'
+      - 'k8s/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'tailwind.config.js'
+      - 'docker-compose.yaml'
+      - '.github/workflows/**'
   pull_request:
     branches:
       - master
+    paths:
+      - 'app/**'
+      - 'src/**'
+      - 'backend/**'
+      - 'k8s/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'tailwind.config.js'
+      - 'docker-compose.yaml'
+      - '.github/workflows/**'
+
+env:
+  NODE_VERSION: '20'
+  REGISTRY: docker.io
 
 jobs:
-  # ==================== TESTING JOBS ====================
+  # ==================== DETECT CHANGES ====================
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.changes.outputs.frontend }}
+      backend: ${{ steps.changes.outputs.backend }}
+      k8s: ${{ steps.changes.outputs.k8s }}
+      shared: ${{ steps.changes.outputs.shared }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'app/**'
+              - 'src/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'vite.config.ts'
+              - 'tailwind.config.js'
+            backend:
+              - 'backend/**'
+              - 'package.json'
+              - 'package-lock.json'
+            k8s:
+              - 'k8s/**'
+              - 'docker-compose.yaml'
+            shared:
+              - '.github/workflows/**'
+              - 'README.md'
+              - 'docker-compose.yaml'
+
+  # ==================== FRONTEND TESTS ====================
   test-frontend:
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'pull_request'
+    strategy:
+      matrix:
+        node-version: [20]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Check if lint script exists
-        id: check_lint
-        run: |
-          if npm run lint --silent 2>/dev/null; then
-            echo "lint_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "lint_exists=false" >> $GITHUB_OUTPUT
-            echo "No lint script found, skipping linting"
-          fi
-        continue-on-error: true
-
       - name: Run frontend linting
-        if: steps.check_lint.outputs.lint_exists == 'true'
         run: npm run lint
         continue-on-error: true
 
-      - name: Check if test script exists
-        id: check_test
-        run: |
-          if npm run test --silent 2>/dev/null; then
-            echo "test_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "test_exists=false" >> $GITHUB_OUTPUT
-            echo "No test script found, skipping tests"
-          fi
+      - name: Run frontend tests
+        run: npm test -- --coverage --watchAll=false --passWithNoTests
         continue-on-error: true
 
-      - name: Run frontend tests
-        if: steps.check_test.outputs.test_exists == 'true'
-        run: npm run test -- --coverage --watchAll=false --passWithNoTests
-        continue-on-error: true
+      - name: Build frontend
+        run: npm run build
 
       - name: Upload frontend test coverage
-        if: steps.check_test.outputs.test_exists == 'true'
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage/lcov.info
@@ -66,25 +121,15 @@ jobs:
           name: frontend-coverage
         continue-on-error: true
 
-      - name: Check if build script exists
-        id: check_build
-        run: |
-          if npm run build --silent 2>/dev/null; then
-            echo "build_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "build_exists=false" >> $GITHUB_OUTPUT
-            echo "No build script found, skipping build test"
-          fi
-        continue-on-error: true
-
-      - name: Build frontend for testing
-        if: steps.check_build.outputs.build_exists == 'true'
-        run: npm run build
-
+  # ==================== BACKEND TESTS ====================
   test-backend:
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || github.event_name == 'pull_request'
+    strategy:
+      matrix:
+        node-version: [20]
     services:
-      # PostgreSQL database for testing
       postgres:
         image: postgres:15
         env:
@@ -103,55 +148,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Check if backend lint script exists
-        id: check_backend_lint
-        run: |
-          if npm run lint:backend --silent 2>/dev/null || npm run lint --silent 2>/dev/null; then
-            echo "lint_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "lint_exists=false" >> $GITHUB_OUTPUT
-            echo "No backend lint script found, checking for ESLint directly"
-          fi
-        continue-on-error: true
-
-      - name: Run ESLint directly if available
-        if: steps.check_backend_lint.outputs.lint_exists == 'false'
-        run: |
-          if command -v npx >/dev/null 2>&1 && npx eslint --version >/dev/null 2>&1; then
-            echo "Running ESLint directly on backend files"
-            npx eslint backend/ --ext .js,.ts,.jsx,.tsx || true
-          else
-            echo "ESLint not available, skipping backend linting"
-          fi
-        continue-on-error: true
-
-      - name: Run backend linting via script
-        if: steps.check_backend_lint.outputs.lint_exists == 'true'
-        run: npm run lint:backend || npm run lint
-        continue-on-error: true
-
-      - name: Check if backend test script exists
-        id: check_backend_test
-        run: |
-          if npm run test:backend --silent 2>/dev/null; then
-            echo "test_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "test_exists=false" >> $GITHUB_OUTPUT
-            echo "No test:backend script found, skipping backend tests"
-          fi
+      - name: Run backend linting
+        run: npm run lint:backend
         continue-on-error: true
 
       - name: Run backend tests
-        if: steps.check_backend_test.outputs.test_exists == 'true'
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
@@ -160,7 +178,6 @@ jobs:
         continue-on-error: true
 
       - name: Upload backend test coverage
-        if: steps.check_backend_test.outputs.test_exists == 'true'
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage/lcov.info
@@ -171,8 +188,14 @@ jobs:
   # ==================== SECURITY SCAN ====================
   security-scan:
     runs-on: ubuntu-latest
-    needs: [test-frontend, test-backend]
-    if: always() && (needs.test-frontend.result == 'success' || needs.test-backend.result == 'success')
+    needs: [detect-changes, test-frontend, test-backend]
+    if: |
+      always() && 
+      (needs.detect-changes.outputs.frontend == 'true' || 
+       needs.detect-changes.outputs.backend == 'true' ||
+       needs.detect-changes.outputs.k8s == 'true') &&
+      (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') &&
+      (needs.test-backend.result == 'success' || needs.test-backend.result == 'skipped')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -192,15 +215,22 @@ jobs:
           sarif_file: 'trivy-results.sarif'
         continue-on-error: true
 
-  # ==================== BUILD & DEPLOY ====================
-  build-and-push:
+  # ==================== BUILD & PUSH FRONTEND ====================
+  build-frontend:
     runs-on: ubuntu-latest
-    needs: [test-frontend, test-backend, security-scan]
-    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/master' && !failure()
+    needs: [detect-changes, test-frontend, security-scan]
+    if: |
+      always() && 
+      github.event_name == 'push' && 
+      github.ref == 'refs/heads/master' && 
+      needs.detect-changes.outputs.frontend == 'true' &&
+      needs.detect-changes.outputs.backend != 'true' &&
+      (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') &&
+      (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
     permissions:
       contents: read
       packages: write
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -214,13 +244,10 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # -------- GET LATEST VERSIONS FROM DOCKER HUB --------
-      - name: Get latest frontend version from Docker Hub
+      - name: Get latest frontend version
         id: frontend_version
         run: |
           REPO="${{ secrets.DOCKER_USERNAME }}/dog-adoption-frontend"
-          echo "Fetching latest version for $REPO..."
-          
           LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" | \
             jq -r '.results[].name' | \
             grep -E '^v[0-9]+$' | \
@@ -229,78 +256,223 @@ jobs:
             tail -1)
           
           if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
-            echo "No existing versions found, starting from 19"
             LATEST_VERSION=19
           fi
           
           NEW_VERSION=$((LATEST_VERSION + 1))
-          echo "Latest frontend version: v$LATEST_VERSION"
-          echo "New frontend version: v$NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Frontend version: v$NEW_VERSION"
 
-      - name: Get latest backend version from Docker Hub
-        id: backend_version
-        run: |
-          REPO="${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend"
-          echo "Fetching latest version for $REPO..."
-          
-          LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" | \
-            jq -r '.results[].name' | \
-            grep -E '^v[0-9]+$' | \
-            sed 's/v//' | \
-            sort -n | \
-            tail -1)
-          
-          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
-            echo "No existing versions found, starting from 13"
-            LATEST_VERSION=13
-          fi
-          
-          NEW_VERSION=$((LATEST_VERSION + 1))
-          echo "Latest backend version: v$LATEST_VERSION"
-          echo "New backend version: v$NEW_VERSION"
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-
-      # -------- BUILD AND PUSH IMAGES --------
       - name: Build & Push Frontend
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./app/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/dog-adoption-frontend:v${{ steps.frontend_version.outputs.new_version }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/dog-adoption-frontend:v${{ steps.frontend_version.outputs.new_version }}
+            ${{ secrets.DOCKER_USERNAME }}/dog-adoption-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # ==================== BUILD & PUSH BACKEND ====================
+  build-backend:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, test-backend, security-scan]
+    if: |
+      always() && 
+      github.event_name == 'push' && 
+      github.ref == 'refs/heads/master' && 
+      needs.detect-changes.outputs.backend == 'true' &&
+      needs.detect-changes.outputs.frontend != 'true' &&
+      (needs.test-backend.result == 'success' || needs.test-backend.result == 'skipped') &&
+      (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Get latest backend version
+        id: backend_version
+        run: |
+          REPO="${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend"
+          LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" | \
+            jq -r '.results[].name' | \
+            grep -E '^v[0-9]+$' | \
+            sed 's/v//' | \
+            sort -n | \
+            tail -1)
+          
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
+            LATEST_VERSION=13
+          fi
+          
+          NEW_VERSION=$((LATEST_VERSION + 1))
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Backend version: v$NEW_VERSION"
 
       - name: Build & Push Backend
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./backend/src/Dockerfile
+          file: ./backend/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend:v${{ steps.backend_version.outputs.new_version }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend:v${{ steps.backend_version.outputs.new_version }}
+            ${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
 
-      # -------- SUMMARY --------
-      - name: Build Summary
+  # ==================== BUILD & PUSH BOTH (when both change) ====================
+  build-both:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, test-frontend, test-backend, security-scan]
+    if: |
+      always() && 
+      github.event_name == 'push' && 
+      github.ref == 'refs/heads/master' && 
+      needs.detect-changes.outputs.frontend == 'true' &&
+      needs.detect-changes.outputs.backend == 'true' &&
+      (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped') &&
+      (needs.test-backend.result == 'success' || needs.test-backend.result == 'skipped') &&
+      (needs.security-scan.result == 'success' || needs.security-scan.result == 'skipped')
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Get latest frontend version
+        id: frontend_version
         run: |
-          echo "🎉 CI/CD Pipeline completed successfully!"
-          echo "✅ Tests passed"
-          echo "🔒 Security scan completed"
-          echo "📦 Frontend: ${{ secrets.DOCKER_USERNAME }}/dog-adoption-frontend:v${{ steps.frontend_version.outputs.new_version }}"
-          echo "📦 Backend: ${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend:v${{ steps.backend_version.outputs.new_version }}"
+          REPO="${{ secrets.DOCKER_USERNAME }}/dog-adoption-frontend"
+          LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" | \
+            jq -r '.results[].name' | \
+            grep -E '^v[0-9]+$' | \
+            sed 's/v//' | \
+            sort -n | \
+            tail -1)
+          
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
+            LATEST_VERSION=19
+          fi
+          
+          NEW_VERSION=$((LATEST_VERSION + 1))
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Frontend version: v$NEW_VERSION"
+
+      - name: Get latest backend version
+        id: backend_version
+        run: |
+          REPO="${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend"
+          LATEST_VERSION=$(curl -s "https://registry.hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" | \
+            jq -r '.results[].name' | \
+            grep -E '^v[0-9]+$' | \
+            sed 's/v//' | \
+            sort -n | \
+            tail -1)
+          
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "null" ]; then
+            LATEST_VERSION=13
+          fi
+          
+          NEW_VERSION=$((LATEST_VERSION + 1))
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Backend version: v$NEW_VERSION"
+
+      - name: Build & Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./app/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/dog-adoption-frontend:v${{ steps.frontend_version.outputs.new_version }}
+            ${{ secrets.DOCKER_USERNAME }}/dog-adoption-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Build & Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend:v${{ steps.backend_version.outputs.new_version }}
+            ${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # ==================== KUBERNETES DEPLOYMENT ====================
+  deploy-k8s:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, build-frontend, build-backend, build-both]
+    if: |
+      always() && 
+      github.event_name == 'push' && 
+      github.ref == 'refs/heads/master' && 
+      needs.detect-changes.outputs.k8s == 'true' &&
+      (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
+      (needs.build-backend.result == 'success' || needs.build-backend.result == 'skipped') &&
+      (needs.build-both.result == 'success' || needs.build-both.result == 'skipped')
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubectl
+        run: |
+          # Add your kubectl configuration here
+          echo "Kubernetes deployment would happen here"
+          echo "This step would update your K8s manifests with new image tags"
 
   # ==================== NOTIFICATION ====================
   notify:
     runs-on: ubuntu-latest
-    needs: [build-and-push]
+    needs: [build-frontend, build-backend, build-both, deploy-k8s]
     if: always()
     steps:
       - name: Notify deployment status
         run: |
-          if [ "${{ needs.build-and-push.result }}" == "success" ]; then
+          if [ "${{ needs.build-frontend.result }}" == "success" ] || [ "${{ needs.build-backend.result }}" == "success" ] || [ "${{ needs.build-both.result }}" == "success" ]; then
             echo "✅ Deployment successful!"
+            echo "Frontend: ${{ needs.build-frontend.result }}"
+            echo "Backend: ${{ needs.build-backend.result }}"
+            echo "Both: ${{ needs.build-both.result }}"
+            echo "K8s: ${{ needs.deploy-k8s.result }}"
           else
             echo "❌ Deployment failed!"
             exit 1
