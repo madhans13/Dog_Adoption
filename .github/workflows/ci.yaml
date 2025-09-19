@@ -23,7 +23,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Check if lint script exists
         id: check_lint
@@ -84,19 +84,20 @@ jobs:
   test-backend:
     runs-on: ubuntu-latest
     services:
-      # Add database service if needed (MongoDB, PostgreSQL, etc.)
-      mongodb:
-        image: mongo:7
+      # PostgreSQL database for testing
+      postgres:
+        image: postgres:15
         env:
-          MONGO_INITDB_ROOT_USERNAME: testuser
-          MONGO_INITDB_ROOT_PASSWORD: testpass
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
         options: >-
-          --health-cmd "echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet"
+          --health-cmd "pg_isready -U testuser -d testdb"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 27017:27017
+          - 5432:5432
 
     steps:
       - name: Checkout code
@@ -109,7 +110,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Check if backend lint script exists
         id: check_backend_lint
@@ -153,7 +154,7 @@ jobs:
         if: steps.check_backend_test.outputs.test_exists == 'true'
         env:
           NODE_ENV: test
-          DATABASE_URL: mongodb://testuser:testpass@localhost:27017/testdb
+          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
           PORT: 3001
         run: npm run test:backend
         continue-on-error: true
