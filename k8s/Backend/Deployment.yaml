@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: dog-adoption-backend
-          image: madhan13/dog-adoption-backend:v7
+          image: madhan13/dog-adoption-backend:v19
           imagePullPolicy: Always
           env:
             - name: NODE_ENV
