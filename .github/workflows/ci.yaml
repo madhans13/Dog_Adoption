@@ -267,7 +267,7 @@ jobs:
       - uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./backend/Dockerfile
+          file: ./backend/src/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend:v${{ steps.backend_version.outputs.new_version }}
@@ -352,7 +352,7 @@ jobs:
       - uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./backend/Dockerfile
+          file: ./backend/src/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/dog-adoption-backend:v${{ steps.backend_version.outputs.new_version }}
