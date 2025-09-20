@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: dog-adoption-frontend
-          image: madhan13/dog-adoption-frontend:v28
+          image: madhan13/dog-adoption-frontend:v29
           imagePullPolicy: Always
           env:
             - name: RUNTIME_API_BASE_URL
