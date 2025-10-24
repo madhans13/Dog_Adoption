@@ -1,0 +1,4 @@
+datadog:
+ apiKeyExistingSecret: datadog-secret
+ clusterName: dog-adoption-civo-upgraded
+ site: us5.datadoghq.com
